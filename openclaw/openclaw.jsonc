@@ -1,0 +1,150 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.17",
+    "lastTouchedAt": "2026-02-18T11:37:19.506Z"
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "openrouter/google/gemini-2.0-flash-001"
+      },
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "sandbox": {
+        "mode": "all",
+        "scope": "agent"
+      }
+    },
+    "list": [
+      {
+        "id": "main"
+      },
+      {
+        "id": "frontdesk",
+        "name": "frontdesk",
+        "workspace": "/Users/igodju/Projects/ohio-agents/ohio-claims/openclaw/agents/frontdesk",
+        "agentDir": "/Users/igodju/.openclaw/agents/frontdesk/agent",
+        "model": "openrouter/google/gemini-2.0-flash-001",
+        "tools": {
+          "allow": [
+            "claims.get_summary",
+            "claims.write_stage_result",
+            "claims.list_attachments"
+          ]
+        }
+      },
+      {
+        "id": "claimsofficer",
+        "name": "claimsofficer",
+        "workspace": "/Users/igodju/Projects/ohio-agents/ohio-claims/openclaw/agents/claimsofficer",
+        "agentDir": "/Users/igodju/.openclaw/agents/claimsofficer/agent",
+        "model": "openrouter/google/gemini-2.0-flash-001",
+        "tools": {
+          "allow": [
+            "claims.get_summary",
+            "claims.write_stage_result",
+            "claims.list_attachments"
+          ]
+        }
+      },
+      {
+        "id": "assessor",
+        "name": "assessor",
+        "workspace": "/Users/igodju/Projects/ohio-agents/ohio-claims/openclaw/agents/assessor",
+        "agentDir": "/Users/igodju/.openclaw/agents/assessor/agent",
+        "model": "openrouter/google/gemini-2.0-flash-001",
+        "tools": {
+          "allow": [
+            "claims.get_summary",
+            "claims.write_stage_result",
+            "claims.list_attachments"
+          ]
+        }
+      },
+      {
+        "id": "fraudanalyst",
+        "name": "fraudanalyst",
+        "workspace": "/Users/igodju/Projects/ohio-agents/ohio-claims/openclaw/agents/fraudanalyst",
+        "agentDir": "/Users/igodju/.openclaw/agents/fraudanalyst/agent",
+        "model": "openrouter/google/gemini-2.0-flash-001",
+        "tools": {
+          "allow": [
+            "claims.get_summary",
+            "claims.write_stage_result",
+            "claims.list_attachments"
+          ]
+        }
+      },
+      {
+        "id": "seniorreviewer",
+        "name": "seniorreviewer",
+        "workspace": "/Users/igodju/Projects/ohio-agents/ohio-claims/openclaw/agents/seniorreviewer",
+        "agentDir": "/Users/igodju/.openclaw/agents/seniorreviewer/agent",
+        "model": "openrouter/google/gemini-2.0-flash-001",
+        "tools": {
+          "allow": [
+            "claims.get_summary",
+            "claims.write_stage_result",
+            "claims.list_attachments"
+          ]
+        }
+      },
+      {
+        "id": "finance",
+        "name": "finance",
+        "workspace": "/Users/igodju/Projects/ohio-agents/ohio-claims/openclaw/agents/finance",
+        "agentDir": "/Users/igodju/.openclaw/agents/finance/agent",
+        "model": "openrouter/google/gemini-2.0-flash-001",
+        "tools": {
+          "allow": [
+            "claims.get_summary",
+            "claims.write_stage_result",
+            "claims.list_attachments"
+          ]
+        }
+      }
+    ]
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto"
+  },
+  "gateway": {
+    "mode": "local",
+    "auth": {
+      "mode": "token"
+    },
+    "http": {
+      "endpoints": {
+        "responses": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "plugins": {
+    "load": {
+      "paths": [
+        "/Users/igodju/Projects/ohio-agents/ohio-claims/openclaw/plugins/claims-tools"
+      ]
+    },
+    "entries": {
+      "claims-tools": {
+        "enabled": true
+      },
+      "diagnostics-otel": {
+        "enabled": true
+      }
+    },
+    "installs": {
+      "claims-tools": {
+        "source": "path",
+        "sourcePath": "/Users/igodju/Projects/ohio-agents/ohio-claims/openclaw/plugins/claims-tools",
+        "installPath": "/Users/igodju/Projects/ohio-agents/ohio-claims/openclaw/plugins/claims-tools",
+        "version": "0.0.1",
+        "installedAt": "2026-02-18T11:36:54.123Z"
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "claims-tools",
+  "name": "Ohio Claims Tools",
+  "version": "0.0.1",
+  "description": "Plugin tools for Ohio auto claims pipeline agents",
+  "entry": "./src/index.ts",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "apiBaseUrl": { "type": "string", "description": "Base URL of the Claims API", "default": "http://127.0.0.1:8080" }
+    }
+  }
+}
