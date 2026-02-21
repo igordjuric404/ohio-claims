@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FrontDeskOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["triage_category", "missing_items", "compliance", "confidence"],
+  "properties": {
+    "triage_category": { "type": "string", "enum": ["fast_track", "standard", "complex"] },
+    "missing_items": { "type": "array", "items": { "type": "string" } },
+    "compliance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ack_due_at", "deadlines_met", "next_required_action"],
+      "properties": {
+        "ack_due_at": { "type": "string" },
+        "deadlines_met": { "type": "boolean" },
+        "next_required_action": { "type": "string" }
+      }
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}

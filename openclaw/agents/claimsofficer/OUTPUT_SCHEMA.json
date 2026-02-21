@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClaimsOfficerOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["coverage_status", "proof_of_loss_needed", "compliance", "confidence"],
+  "properties": {
+    "coverage_status": { "type": "string", "enum": ["covered", "denied", "need_more_info"] },
+    "deductible": { "type": "number" },
+    "limits": { "type": "number" },
+    "denial_reason": { "type": "string" },
+    "denial_provision_ref": { "type": "string" },
+    "proof_of_loss_needed": { "type": "boolean" },
+    "compliance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accept_deny_deadline", "deadlines_met", "next_required_action"],
+      "properties": {
+        "accept_deny_deadline": { "type": "string" },
+        "deadlines_met": { "type": "boolean" },
+        "next_required_action": { "type": "string" }
+      }
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AssessorOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["repair_estimate_low", "repair_estimate_high", "total_loss_recommended", "tax_reimbursement_eligible", "compliance", "confidence"],
+  "properties": {
+    "repair_estimate_low": { "type": "number", "minimum": 0 },
+    "repair_estimate_high": { "type": "number", "minimum": 0 },
+    "total_loss_recommended": { "type": "boolean" },
+    "valuation_method": { "type": "string", "enum": ["local_comps", "proximate_market_comps", "dealer_quotes", "industry_source_database"] },
+    "actual_cash_value": { "type": "number", "minimum": 0 },
+    "betterment_deductions": { "type": "array", "items": { "type": "string" } },
+    "parts_compliance_note": { "type": "string" },
+    "tax_reimbursement_eligible": { "type": "boolean" },
+    "compliance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["estimate_provided", "deadlines_met", "next_required_action"],
+      "properties": {
+        "estimate_provided": { "type": "boolean" },
+        "deadlines_met": { "type": "boolean" },
+        "next_required_action": { "type": "string" }
+      }
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}

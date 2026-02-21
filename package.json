@@ -6,5 +6,20 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "lint": "echo 'lint placeholder'"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
+    "nanoid": "^5.1.6"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

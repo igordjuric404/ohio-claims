@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FinanceOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["payment_status", "compliance", "confidence"],
+  "properties": {
+    "payment_status": { "type": "string", "enum": ["disbursed", "held", "rejected"] },
+    "amount": { "type": "number", "minimum": 0 },
+    "payee": { "type": "string" },
+    "ledger_entry_id": { "type": "string" },
+    "receipt_ref": { "type": "string" },
+    "compliance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deadlines_met", "next_required_action"],
+      "properties": {
+        "payment_due_at": { "type": "string" },
+        "deadlines_met": { "type": "boolean" },
+        "next_required_action": { "type": "string" }
+      }
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}

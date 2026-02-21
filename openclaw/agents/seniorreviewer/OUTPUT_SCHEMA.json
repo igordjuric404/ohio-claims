@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SeniorReviewerOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["final_outcome", "rationale", "required_actions", "needs_human_review", "compliance", "confidence"],
+  "properties": {
+    "final_outcome": { "type": "string", "enum": ["approve", "partial", "deny", "escalate"] },
+    "rationale": { "type": "string", "minLength": 1 },
+    "approve_amount_cap": { "type": "number", "minimum": 0 },
+    "required_actions": { "type": "array", "items": { "type": "string" } },
+    "needs_human_review": { "type": "boolean" },
+    "compliance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["all_stages_complete", "deadlines_met", "next_required_action"],
+      "properties": {
+        "all_stages_complete": { "type": "boolean" },
+        "deadlines_met": { "type": "boolean" },
+        "next_required_action": { "type": "string" }
+      }
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}

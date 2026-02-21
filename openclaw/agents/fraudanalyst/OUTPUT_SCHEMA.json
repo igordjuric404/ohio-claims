@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FraudAnalystOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["risk_score", "flags", "recommendation", "compliance", "confidence"],
+  "properties": {
+    "risk_score": { "type": "number", "minimum": 0, "maximum": 100 },
+    "flags": { "type": "array", "items": { "type": "string" } },
+    "recommendation": { "type": "string", "enum": ["normal", "enhanced_review", "siu_referral"] },
+    "fraud_reporting_deadline": { "type": "string" },
+    "compliance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deadlines_met", "next_required_action"],
+      "properties": {
+        "fraud_report_due_at": { "type": "string" },
+        "deadlines_met": { "type": "boolean" },
+        "next_required_action": { "type": "string" }
+      }
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}
