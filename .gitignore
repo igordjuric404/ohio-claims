@@ -9,3 +9,4 @@ infra/aws/env.sh
 .openclaw/
 *.log
 .DS_Store
+ui/test-results/

@@ -109,11 +109,14 @@ export type AssessorOutput = {
   repair_estimate_low: number;
   repair_estimate_high: number;
   total_loss_recommended: boolean;
+  damaged_components?: string[];
+  assessment_notes?: string;
   valuation_method?: "local_comps" | "proximate_market_comps" | "dealer_quotes" | "industry_source_database";
   actual_cash_value?: number;
   betterment_deductions?: string[];
   parts_compliance_note?: string;
   tax_reimbursement_eligible: boolean;
+  pricing_sources?: string[];
   compliance: {
     estimate_provided: boolean;
     deadlines_met: boolean;

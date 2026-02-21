@@ -4,9 +4,13 @@ import { runAgent, loadSystemPrompt, type AgentCallOptions } from "./client.js";
 import { stageValidators } from "@ohio-claims/shared";
 import * as db from "../storage/index.js";
 import { computeEventHash, createEventSK } from "../lib/audit.js";
+import { decrypt } from "../crypto/encrypt.js";
 import type { ClaimStage } from "@ohio-claims/shared";
 
 const AGENTS_NEEDING_REASONING = new Set(["claimsofficer", "assessor", "fraudanalyst"]);
+
+const WEB_SEARCH_MODEL = process.env.WEB_SEARCH_MODEL ?? "google/gemini-2.0-flash-001:online";
+const AGENTS_NEEDING_WEB_SEARCH = new Set(["assessor"]);
 
 const PIPELINE_STAGES: Array<{
   fromStage: ClaimStage;
@@ -34,6 +38,36 @@ function extractJson(text: string): unknown {
 
 function truncate(s: string, max: number): string {
   return s.length > max ? s.substring(0, max) + "... [truncated]" : s;
+}
+
+function tryDecrypt(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  try {
+    return decrypt(value);
+  } catch {
+    return value;
+  }
+}
+
+function decryptClaimForAgent(claim: Record<string, unknown>): Record<string, unknown> {
+  const copy = { ...claim };
+  if (copy.claimant && typeof copy.claimant === "object") {
+    const c = copy.claimant as Record<string, unknown>;
+    copy.claimant = {
+      full_name: tryDecrypt(c.full_name),
+      phone: tryDecrypt(c.phone),
+      email: c.email ? tryDecrypt(c.email) : undefined,
+      address: c.address ? tryDecrypt(c.address) : undefined,
+    };
+  }
+  if (copy.vehicle && typeof copy.vehicle === "object") {
+    const v = copy.vehicle as Record<string, unknown>;
+    copy.vehicle = {
+      ...v,
+      vin: v.vin ? tryDecrypt(v.vin) : undefined,
+    };
+  }
+  return copy;
 }
 
 async function appendEvent(
@@ -84,7 +118,8 @@ async function runStage(
   const traceId = pipelineTraceId;
   const started = new Date();
 
-  const claimSummary = JSON.stringify(claim, null, 2);
+  const decryptedClaim = decryptClaimForAgent(claim);
+  const claimSummary = JSON.stringify(decryptedClaim, null, 2);
   const prompt = `Analyze this claim and produce your structured JSON output.\n\nClaim data:\n${claimSummary}`;
   const systemPrompt = loadSystemPrompt(agentId);
 
@@ -130,6 +165,9 @@ async function runStage(
   const callOptions: AgentCallOptions = {};
   if (AGENTS_NEEDING_REASONING.has(agentId)) {
     callOptions.enableReasoning = true;
+  }
+  if (AGENTS_NEEDING_WEB_SEARCH.has(agentId)) {
+    callOptions.model = WEB_SEARCH_MODEL;
   }
 
   try {

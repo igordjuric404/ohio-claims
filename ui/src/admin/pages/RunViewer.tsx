@@ -1,11 +1,37 @@
 import { useState, useEffect, useRef } from "react";
 import { getRuns, getRunDetail, getClaimPhotos } from "../api";
 import { agentName, stageName, statusName, fieldLabel, formatFieldValue } from "../displayNames";
+import { formatCurrencyRange } from "../../lib/fieldLabels";
 import { TruncatedValue } from "../components/TruncatedValue";
 
 function formatCost(usage: any): string {
   if (!usage?.cost) return "—";
   return `$${Number(usage.cost).toFixed(6)}`;
+}
+
+const SKIP_KEYS = new Set(["repair_estimate_high"]);
+
+function renderOutputCards(obj: Record<string, unknown>) {
+  const entries = Object.entries(obj).filter(
+    ([k, v]) => v !== null && v !== undefined && v !== "" && !SKIP_KEYS.has(k)
+  );
+  return entries.map(([k, v]) => {
+    let displayValue: React.ReactNode;
+    if (k === "repair_estimate_low" && typeof v === "number" && typeof obj.repair_estimate_high === "number") {
+      displayValue = formatCurrencyRange(v, obj.repair_estimate_high as number);
+    } else if (typeof v === "object") {
+      displayValue = <pre className="run-io-pre">{JSON.stringify(v, null, 2)}</pre>;
+    } else {
+      displayValue = formatFieldValue(k, v);
+    }
+    const label = k === "repair_estimate_low" && obj.repair_estimate_high != null ? "Repair Estimate Range" : fieldLabel(k);
+    return (
+      <div key={k} className="run-output-card">
+        <dt>{label}</dt>
+        <dd>{displayValue}</dd>
+      </div>
+    );
+  });
 }
 
 function RunPhotos({ claimId }: { claimId: string }) {
@@ -93,12 +119,7 @@ function RunEventTimeline({ events }: { events: any[] }) {
                   <summary>Parsed Output</summary>
                   {typeof e.payload === "object" && !Array.isArray(e.payload) && !e.payload.output_summary ? (
                     <div className="run-output-cards">
-                      {Object.entries(e.payload).map(([k, v]) => (
-                        <div key={k} className="run-output-card">
-                          <dt>{fieldLabel(k)}</dt>
-                          <dd>{typeof v === "object" ? JSON.stringify(v, null, 2) : formatFieldValue(k, v)}</dd>
-                        </div>
-                      ))}
+                      {renderOutputCards(e.payload)}
                     </div>
                   ) : (
                     <pre className="run-io-pre">{JSON.stringify(e.payload, null, 2)}</pre>
@@ -247,12 +268,7 @@ function RunDetail({ runId, onBack, onNavigate }: { runId: string; onBack: () =>
           <details open>
             <summary><h3 style={{ display: "inline" }}>Agent Output</h3></summary>
             <div className="run-output-cards">
-              {Object.entries(run.output_json).map(([k, v]) => (
-                <div key={k} className="run-output-card">
-                  <dt>{fieldLabel(k)}</dt>
-                  <dd>{typeof v === "object" ? <pre className="run-io-pre">{JSON.stringify(v, null, 2)}</pre> : formatFieldValue(k, v)}</dd>
-                </div>
-              ))}
+              {renderOutputCards(run.output_json)}
             </div>
           </details>
         </div>

@@ -8,9 +8,11 @@ export async function onRequest(context: { request: Request; env: Env; params: {
   const upstreamBase = env.AWS_EDGE_BASE_URL || "http://127.0.0.1:8080";
   const url = new URL(request.url);
 
-  // /api/admin/* → /admin/*, everything else → /edge/*
+  // /api/admin/* → /admin/*, /api/reviewer/* → /reviewer/*, everything else → /edge/*
   let upstreamPath: string;
   if (pathSegments.startsWith("admin")) {
+    upstreamPath = `/${pathSegments}`;
+  } else if (pathSegments.startsWith("reviewer")) {
     upstreamPath = `/${pathSegments}`;
   } else {
     upstreamPath = `/edge/${pathSegments}`;

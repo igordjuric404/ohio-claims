@@ -48,4 +48,22 @@ aws ssm put-parameter \
   --overwrite \
   --region "$AWS_REGION"
 
+ADMIN_PW="${ADMIN_PASSWORD:-admin}"
+echo "  ${PREFIX}/ADMIN_PASSWORD"
+aws ssm put-parameter \
+  --name "${PREFIX}/ADMIN_PASSWORD" \
+  --value "$ADMIN_PW" \
+  --type SecureString \
+  --overwrite \
+  --region "$AWS_REGION"
+
+REVIEWER_PW="${REVIEWER_PASSWORD:-reviewer}"
+echo "  ${PREFIX}/REVIEWER_PASSWORD"
+aws ssm put-parameter \
+  --name "${PREFIX}/REVIEWER_PASSWORD" \
+  --value "$REVIEWER_PW" \
+  --type SecureString \
+  --overwrite \
+  --region "$AWS_REGION"
+
 echo "Done."

@@ -15,6 +15,7 @@ import { reviewerAuthRoutes } from "./routes/reviewer/auth.js";
 import { reviewerClaimsRoutes } from "./routes/reviewer/claims.js";
 import { intakeRoutes } from "./routes/intake.js";
 import { assessmentRoutes } from "./routes/assessment.js";
+import { testSeedRoutes } from "./routes/testSeed.js";
 import { setAdminPassword, setReviewerPassword } from "./middleware/adminAuth.js";
 
 const masterKey = process.env.APP_MASTER_KEY_B64;
@@ -65,6 +66,7 @@ await app.register(reviewerAuthRoutes);
 await app.register(reviewerClaimsRoutes);
 await app.register(intakeRoutes);
 await app.register(assessmentRoutes);
+await app.register(testSeedRoutes);
 
 const port = Number(process.env.PORT ?? "8080");
 const host = process.env.HOST ?? "0.0.0.0";

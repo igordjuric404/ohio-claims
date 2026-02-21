@@ -7,8 +7,12 @@ source "$(dirname "$0")/.state/s3.env"
 source "$(dirname "$0")/.state/ddb.env" 2>/dev/null || true
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SSH_KEY="$SCRIPT_DIR/.state/ohio-claims-dev-key.pem"
 SSH_USER="ubuntu"
 SSH_HOST="$PUBLIC_IP"
+SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+[[ -f "$SSH_KEY" ]] && SSH_OPTS="-i $SSH_KEY $SSH_OPTS"
 
 echo "=== Deploying to EC2: $SSH_HOST ==="
 
@@ -20,11 +24,11 @@ rsync -az --delete \
   --exclude '.wrangler' \
   --exclude '.openclaw' \
   --exclude 'infra/aws/.state' \
-  -e "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10" \
+  -e "ssh $SSH_OPTS" \
   "$REPO_ROOT/" "${SSH_USER}@${SSH_HOST}:/home/ubuntu/ohio-claims/"
 
 echo "2. Running setup on EC2..."
-ssh -o StrictHostKeyChecking=no "${SSH_USER}@${SSH_HOST}" bash -s <<'REMOTE_SCRIPT'
+ssh $SSH_OPTS "${SSH_USER}@${SSH_HOST}" bash -s <<'REMOTE_SCRIPT'
 set -euo pipefail
 
 echo "Installing Node.js 22..."
@@ -48,6 +52,8 @@ export AWS_REGION="eu-central-1"
 OPENROUTER_API_KEY=$(aws ssm get-parameter --name "/ohio-claims/dev/OPENROUTER_API_KEY" --with-decryption --query 'Parameter.Value' --output text)
 APP_MASTER_KEY_B64=$(aws ssm get-parameter --name "/ohio-claims/dev/APP_MASTER_KEY_B64" --with-decryption --query 'Parameter.Value' --output text)
 OPENCLAW_GATEWAY_TOKEN=$(aws ssm get-parameter --name "/ohio-claims/dev/OPENCLAW_GATEWAY_TOKEN" --with-decryption --query 'Parameter.Value' --output text)
+ADMIN_PASSWORD=$(aws ssm get-parameter --name "/ohio-claims/dev/ADMIN_PASSWORD" --with-decryption --query 'Parameter.Value' --output text 2>/dev/null || echo "admin")
+REVIEWER_PASSWORD=$(aws ssm get-parameter --name "/ohio-claims/dev/REVIEWER_PASSWORD" --with-decryption --query 'Parameter.Value' --output text 2>/dev/null || echo "reviewer")
 
 echo "Writing environment file..."
 sudo mkdir -p /etc/ohio-claims
@@ -61,6 +67,8 @@ S3_BUCKET=ohio-claims-dev-attachments-422287833706-eu-central-1
 OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
 APP_MASTER_KEY_B64=${APP_MASTER_KEY_B64}
 OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
+ADMIN_PASSWORD=${ADMIN_PASSWORD}
+REVIEWER_PASSWORD=${REVIEWER_PASSWORD}
 EOF
 sudo chmod 600 /etc/ohio-claims/env
 

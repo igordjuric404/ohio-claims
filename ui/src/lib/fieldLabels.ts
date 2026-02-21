@@ -40,11 +40,14 @@ export const FIELD_LABELS: Record<string, string> = {
   repair_estimate_low: "Repair Estimate (Low)",
   repair_estimate_high: "Repair Estimate (High)",
   total_loss_recommended: "Total Loss Recommended",
+  damaged_components: "Damaged Components",
+  assessment_notes: "Assessment Notes",
   valuation_method: "Valuation Method",
   actual_cash_value: "Actual Cash Value",
   betterment_deductions: "Betterment Deductions",
   parts_compliance_note: "Parts Compliance Note",
   tax_reimbursement_eligible: "Tax Reimbursement Eligible",
+  pricing_sources: "Pricing Sources",
 
   // Fraud Analyst output
   risk_score: "Risk Score",
