@@ -6,6 +6,8 @@ import {
   QueryCommand,
   UpdateCommand,
   ScanCommand,
+  DeleteCommand,
+  BatchWriteCommand,
 } from "@aws-sdk/lib-dynamodb";
 
 if (process.env.USE_MEMORY_STORAGE === "true") {
@@ -237,4 +239,38 @@ export async function scanIntakeJobs(limit = 50) {
     new ScanCommand({ TableName: INTAKE_JOBS_TABLE, Limit: limit })
   );
   return res.Items ?? [];
+}
+
+async function batchDeleteAll(table: string, keyExtractor: (item: Record<string, unknown>) => Record<string, unknown>) {
+  let lastKey: Record<string, unknown> | undefined;
+  let total = 0;
+  do {
+    const res = await ddb.send(new ScanCommand({ TableName: table, Limit: 25, ExclusiveStartKey: lastKey as any }));
+    const items = res.Items ?? [];
+    if (items.length === 0) break;
+    const batches: Record<string, unknown>[][] = [];
+    for (let i = 0; i < items.length; i += 25) batches.push(items.slice(i, i + 25));
+    for (const batch of batches) {
+      await ddb.send(new BatchWriteCommand({
+        RequestItems: {
+          [table]: batch.map(item => ({ DeleteRequest: { Key: keyExtractor(item) } })),
+        },
+      }));
+      total += batch.length;
+    }
+    lastKey = res.LastEvaluatedKey;
+  } while (lastKey);
+  return total;
+}
+
+export async function purgeAllClaims() {
+  const claimsDel = await batchDeleteAll(CLAIMS_TABLE, i => ({ claim_id: i.claim_id }));
+  const eventsDel = await batchDeleteAll(EVENTS_TABLE, i => ({ claim_id: i.claim_id, event_sk: i.event_sk }));
+  return { claims: claimsDel, events: eventsDel };
+}
+
+export async function purgeAllRuns() {
+  const runsDel = await batchDeleteAll(RUNS_TABLE, i => ({ run_id: i.run_id }));
+  const eventsDel = await batchDeleteAll(RUN_EVENTS_TABLE, i => ({ run_id: i.run_id, seq: i.seq }));
+  return { runs: runsDel, run_events: eventsDel };
 }

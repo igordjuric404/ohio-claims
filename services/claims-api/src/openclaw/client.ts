@@ -16,14 +16,35 @@ const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN ?? "";
 export type AgentResponse = {
   text: string;
   model: string;
+  reasoning?: string;
   usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+};
+
+export type AgentCallOptions = {
+  model?: string;
+  enableReasoning?: boolean;
 };
 
 async function callOpenRouterDirect(
   systemPrompt: string,
   userMessage: string,
-  model?: string
+  options: AgentCallOptions = {}
 ): Promise<AgentResponse> {
+  const model = options.model ?? DEFAULT_MODEL;
+  const body: Record<string, unknown> = {
+    model,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userMessage },
+    ],
+    max_tokens: 4000,
+    temperature: 0.1,
+  };
+
+  if (options.enableReasoning) {
+    body.reasoning = { max_tokens: 2000 };
+  }
+
   const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
     method: "POST",
     headers: {
@@ -32,15 +53,7 @@ async function callOpenRouterDirect(
       "x-title": "ohio-claims",
       "http-referer": "https://ohio-claims.pages.dev",
     },
-    body: JSON.stringify({
-      model: model ?? DEFAULT_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage },
-      ],
-      max_tokens: 2000,
-      temperature: 0.1,
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
@@ -49,11 +62,14 @@ async function callOpenRouterDirect(
   }
 
   const data = await res.json() as any;
-  const text = data.choices?.[0]?.message?.content ?? "";
+  const message = data.choices?.[0]?.message;
+  const text = message?.content ?? "";
+  const reasoning = message?.reasoning ?? undefined;
 
   return {
     text,
-    model: data.model ?? model ?? DEFAULT_MODEL,
+    model: data.model ?? model,
+    reasoning,
     usage: data.usage,
   };
 }
@@ -106,7 +122,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const AGENTS_DIR = resolve(__dirname, "../../../../openclaw/agents");
 
-function loadSystemPrompt(agentId: string): string {
+export function loadSystemPrompt(agentId: string): string {
   try {
     return readFileSync(resolve(AGENTS_DIR, agentId, "SYSTEM_PROMPT.md"), "utf-8");
   } catch {
@@ -117,12 +133,13 @@ function loadSystemPrompt(agentId: string): string {
 export async function runAgent(
   agentId: string,
   message: string,
-  sessionId?: string
+  sessionId?: string,
+  options: AgentCallOptions = {}
 ): Promise<AgentResponse> {
   if (GATEWAY_URL) {
     return callGateway(agentId, message, sessionId);
   }
 
   const systemPrompt = loadSystemPrompt(agentId);
-  return callOpenRouterDirect(systemPrompt, message);
+  return callOpenRouterDirect(systemPrompt, message, options);
 }

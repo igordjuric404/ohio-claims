@@ -46,6 +46,12 @@ export async function getClaimDetail(id: string) {
   return res.json();
 }
 
+export async function getClaimPhotos(id: string): Promise<{ photos: { key: string; filename: string; url: string }[] }> {
+  const res = await adminFetch(`/claims/${id}/photos`);
+  if (!res.ok) return { photos: [] };
+  return res.json();
+}
+
 export async function getRuns(params?: Record<string, string>) {
   const qs = params ? "?" + new URLSearchParams(params).toString() : "";
   const res = await adminFetch(`/runs${qs}`);
@@ -91,6 +97,42 @@ export async function createAgent(data: Record<string, unknown>) {
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to create agent");
+  return res.json();
+}
+
+export async function seedAgents() {
+  const res = await adminFetch("/agents/seed", { method: "POST" });
+  if (!res.ok) throw new Error("Failed to seed agents");
+  return res.json();
+}
+
+export async function cleanupStaleRuns() {
+  const res = await adminFetch("/runs/cleanup-stale", { method: "POST" });
+  if (!res.ok) throw new Error("Failed to cleanup stale runs");
+  return res.json();
+}
+
+export async function purgeAllClaims() {
+  const res = await adminFetch("/claims/purge-all", { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to purge claims");
+  return res.json();
+}
+
+export async function purgeAllRuns() {
+  const res = await adminFetch("/runs/purge-all", { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to purge runs");
+  return res.json();
+}
+
+export async function getTestRuns() {
+  const res = await adminFetch("/test-runs");
+  if (!res.ok) throw new Error("Failed to load test runs");
+  return res.json();
+}
+
+export async function getTestRunDetail(version: string) {
+  const res = await adminFetch(`/test-runs/${encodeURIComponent(version)}`);
+  if (!res.ok) throw new Error("Test run not found");
   return res.json();
 }
 

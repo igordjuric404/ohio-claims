@@ -1,0 +1,12 @@
+{
+  "case_id": "TC01",
+  "case_name": "Parking lot scratch",
+  "claim_id": "CLM-vx9PzZ1M7udC",
+  "actual_outcome": "unknown",
+  "final_stage": "PARSE_ERROR",
+  "stages_completed": [],
+  "num_stages": 0,
+  "errors": [],
+  "run_ids": [],
+  "has_image": true
+}

@@ -38,6 +38,29 @@ export async function adminRunsRoutes(app: FastifyInstance) {
     return { events };
   });
 
+  app.post("/admin/runs/cleanup-stale", async (_req, reply) => {
+    const { items: runs } = await db.scanRuns(1000);
+    const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+    let cleaned = 0;
+    for (const r of runs) {
+      if (r.status !== "RUNNING") continue;
+      const startedAt = r.started_at ? new Date(r.started_at as string).getTime() : 0;
+      if (startedAt < fiveMinAgo) {
+        await db.updateRunStatus(r.run_id as string, "FAILED", {
+          ended_at: new Date().toISOString(),
+          error: "stale — cleaned up (orphaned RUNNING state)",
+        });
+        cleaned++;
+      }
+    }
+    return { cleaned, message: `Marked ${cleaned} stale runs as FAILED` };
+  });
+
+  app.delete("/admin/runs/purge-all", async () => {
+    const result = await db.purgeAllRuns();
+    return { ...result, message: `Purged ${result.runs} runs and ${result.run_events} run events` };
+  }); 
+
   app.get("/admin/runs/:run_id/stream", async (req, reply) => {
     const { run_id } = req.params as { run_id: string };
     const fromSeq = Number((req.query as any).from_seq ?? 0);

@@ -10,9 +10,12 @@ import { adminRunsRoutes } from "./routes/admin/runs.js";
 import { adminAuditRoutes } from "./routes/admin/audit.js";
 import { adminUsageRoutes } from "./routes/admin/usage.js";
 import { adminAgentsRoutes } from "./routes/admin/agents.js";
+import { adminTestRunsRoutes } from "./routes/admin/testRuns.js";
+import { reviewerAuthRoutes } from "./routes/reviewer/auth.js";
+import { reviewerClaimsRoutes } from "./routes/reviewer/claims.js";
 import { intakeRoutes } from "./routes/intake.js";
 import { assessmentRoutes } from "./routes/assessment.js";
-import { setAdminPassword } from "./middleware/adminAuth.js";
+import { setAdminPassword, setReviewerPassword } from "./middleware/adminAuth.js";
 
 const masterKey = process.env.APP_MASTER_KEY_B64;
 if (masterKey) {
@@ -32,6 +35,15 @@ if (adminPw) {
   console.warn("ADMIN_PASSWORD not set — using default dev password");
 }
 
+const reviewerPw = process.env.REVIEWER_PASSWORD;
+if (reviewerPw) {
+  setReviewerPassword(reviewerPw);
+  console.log("Reviewer password loaded from environment");
+} else {
+  setReviewerPassword("reviewer-dev-password");
+  console.warn("REVIEWER_PASSWORD not set — using default dev password");
+}
+
 const app = Fastify({ logger: true });
 
 await app.register(cookie);
@@ -48,6 +60,9 @@ await app.register(adminRunsRoutes);
 await app.register(adminAuditRoutes);
 await app.register(adminUsageRoutes);
 await app.register(adminAgentsRoutes);
+await app.register(adminTestRunsRoutes);
+await app.register(reviewerAuthRoutes);
+await app.register(reviewerClaimsRoutes);
 await app.register(intakeRoutes);
 await app.register(assessmentRoutes);
 

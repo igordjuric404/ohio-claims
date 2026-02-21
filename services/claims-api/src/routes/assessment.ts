@@ -5,13 +5,14 @@ import { createPresignedUploadUrlForKey, listByPrefix } from "../storage/s3.js";
 
 const s3Client = new S3Client({});
 const S3_BUCKET = process.env.S3_BUCKET ?? "ohio-claims-dev-attachments";
-import { searchParts, getLocalLaborRate, getACV } from "../tools/pricing.js";
+import { getACV } from "../tools/pricing.js";
 import { ulid } from "ulid";
 import { randomBytes } from "node:crypto";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY ?? "";
 const OPENROUTER_BASE = "https://openrouter.ai/api/v1";
 const VISION_MODEL = process.env.VISION_MODEL ?? "google/gemini-2.0-flash-001";
+const WEB_SEARCH_MODEL = process.env.WEB_SEARCH_MODEL ?? "google/gemini-2.0-flash-001:online";
 const SALVAGE_PCT = Number(process.env.SALVAGE_PCT ?? "0.20");
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -40,6 +41,90 @@ Analyze the damage visible in the photos and produce a structured JSON report:
 
 Be thorough but conservative. Only report damage clearly visible in the images.
 Return ONLY valid JSON, no markdown fences.`;
+
+type WebCitation = { url: string; title: string; content?: string };
+
+async function webSearchPricing(
+  vehicle: { year?: number; make?: string; model?: string },
+  partsNeeded: any[],
+  city: string
+): Promise<{ text: string; citations: WebCitation[]; usage?: any }> {
+  const vehicleStr = `${vehicle.year ?? "?"} ${vehicle.make ?? "?"} ${vehicle.model ?? "?"}`;
+  const partsList = partsNeeded.map(p => `- ${p.name} (qty: ${p.qty}, condition: ${p.condition_recommendation})`).join("\n");
+
+  const prompt = `I need current pricing for auto body repair parts and labor for a ${vehicleStr} in ${city}, Ohio.
+
+Parts needed:
+${partsList}
+
+For each part, find:
+1. Current price range (low and high estimate) for both OEM and aftermarket options
+2. Source/retailer where you found the pricing
+
+Also find:
+3. Current body shop labor rate per hour in ${city}, Ohio
+4. Sources for the labor rate data
+
+Return a structured JSON response:
+{
+  "parts_pricing": [
+    {
+      "name": "part name",
+      "oem_low": number,
+      "oem_high": number,
+      "aftermarket_low": number,
+      "aftermarket_high": number,
+      "sources": ["url1", "url2"]
+    }
+  ],
+  "labor_rate": {
+    "rate_per_hour": number,
+    "sources": ["url1"]
+  },
+  "search_queries": ["what you searched for"]
+}
+
+Return ONLY valid JSON, no markdown fences.`;
+
+  const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${OPENROUTER_API_KEY}`,
+      "content-type": "application/json",
+      "x-title": "ohio-claims-assessor-pricing",
+    },
+    body: JSON.stringify({
+      model: WEB_SEARCH_MODEL,
+      messages: [
+        { role: "system", content: "You are an auto repair cost researcher. Search the web for current parts pricing and labor rates. Return structured JSON with sources." },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 3000,
+      temperature: 0.1,
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Web search pricing failed (${res.status}): ${errText.substring(0, 200)}`);
+  }
+
+  const data = await res.json() as any;
+  const text = data.choices?.[0]?.message?.content ?? "";
+  const annotations = data.choices?.[0]?.message?.annotations ?? [];
+
+  const sanitize = (s: string) => s.replace(/[\x00-\x1f\x7f]/g, " ").trim();
+
+  const citations: WebCitation[] = annotations
+    .filter((a: any) => a.type === "url_citation")
+    .map((a: any) => ({
+      url: sanitize(a.url_citation?.url ?? ""),
+      title: sanitize(a.url_citation?.title ?? ""),
+      content: a.url_citation?.content ? sanitize(a.url_citation.content.substring(0, 300)) : undefined,
+    }));
+
+  return { text, citations, usage: data.usage };
+}
 
 export async function assessmentRoutes(app: FastifyInstance) {
   app.post("/edge/claims/:id/damage-photos/presign", async (req, reply) => {
@@ -72,6 +157,20 @@ export async function assessmentRoutes(app: FastifyInstance) {
     const traceId = randomBytes(16).toString("hex");
     const started = new Date();
 
+    let seqCounter = 1;
+    const emitRunEvent = async (eventType: string, payload: unknown) => {
+      await db.putRunEvent({
+        run_id: runId,
+        seq: seqCounter++,
+        ts: new Date().toISOString(),
+        event_type: eventType,
+        payload,
+      });
+    };
+
+    const vehicle = (claim as any).vehicle ?? {};
+    const city = (claim as any).loss?.city ?? "Columbus";
+
     await db.putRun({
       run_id: runId,
       claim_id: id,
@@ -81,6 +180,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
       started_at: started.toISOString(),
       actor_id: "system",
       trace_id: traceId,
+      input_prompt: `Vision assessment for claim ${id}, vehicle: ${vehicle.year ?? "?"} ${vehicle.make ?? "?"} ${vehicle.model ?? "?"}`,
     });
 
     try {
@@ -90,7 +190,15 @@ export async function assessmentRoutes(app: FastifyInstance) {
         throw new Error("No damage photos found. Upload photos first.");
       }
 
-      // Read images from S3 and encode as base64 data URLs
+      await emitRunEvent("stage.started", { agent_id: "assessor_vision", claim_id: id, stage: "DAMAGE_ASSESSMENT" });
+      await emitRunEvent("agent.input", {
+        system_prompt: ASSESSOR_VISION_PROMPT.substring(0, 2000),
+        prompt: `Analyze ${photoKeys.length} damage photos for claim ${id}`,
+        images_count: photoKeys.length,
+        image_keys: photoKeys,
+      });
+
+      // Step 1: Vision analysis
       const imageContentParts: any[] = [];
       for (const key of photoKeys.slice(0, 8)) {
         try {
@@ -119,7 +227,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
         {
           role: "user",
           content: [
-            { type: "text", text: `Analyze ${imageContentParts.length} damage photos for claim ${id}. Vehicle: ${(claim as any).vehicle?.year ?? "?"} ${(claim as any).vehicle?.make ?? "?"} ${(claim as any).vehicle?.model ?? "?"}` },
+            { type: "text", text: `Analyze ${imageContentParts.length} damage photos for claim ${id}. Vehicle: ${vehicle.year ?? "?"} ${vehicle.make ?? "?"} ${vehicle.model ?? "?"}` },
             ...imageContentParts,
           ],
         },
@@ -147,48 +255,81 @@ export async function assessmentRoutes(app: FastifyInstance) {
 
       const visionData = (await visionRes.json()) as any;
       let visionText = visionData.choices?.[0]?.message?.content ?? "";
+
+      await emitRunEvent("agent.response", { model: VISION_MODEL, usage: visionData.usage, step: "vision_analysis" });
+      await emitRunEvent("agent.raw_output", { raw_text: visionText.substring(0, 5000), step: "vision_analysis" });
+
       if (visionText.startsWith("```")) {
         visionText = visionText.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
       }
       const visionOutput = JSON.parse(visionText);
 
-      // Use tools to get pricing data
-      const vehicle = (claim as any).vehicle ?? {};
-      const city = (claim as any).loss?.city ?? "Columbus";
+      // Step 2: Web search for pricing
+      let webSearchResult: { text: string; citations: WebCitation[]; usage?: any } | null = null;
+      let webPricingData: any = null;
 
+      try {
+        webSearchResult = await webSearchPricing(vehicle, visionOutput.parts_needed ?? [], city);
+
+        await emitRunEvent("web_search.completed", {
+          model: WEB_SEARCH_MODEL,
+          citations: webSearchResult.citations,
+          usage: webSearchResult.usage,
+          raw_text: webSearchResult.text.substring(0, 3000).replace(/[\x00-\x1f\x7f]/g, " "),
+        });
+
+        let pricingText = webSearchResult.text;
+        if (pricingText.startsWith("```")) {
+          pricingText = pricingText.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+        }
+        webPricingData = JSON.parse(pricingText);
+      } catch (err: any) {
+        console.warn(`Web search pricing failed, falling back to simulated: ${err.message}`);
+        await emitRunEvent("web_search.failed", { error: err.message });
+      }
+
+      // Compute pricing from web search or fallback to simulated
       const partsResults = [];
-      for (const part of visionOutput.parts_needed ?? []) {
-        const results = await searchParts({
-          vehicle,
-          part_name: part.name,
-          condition: part.condition_recommendation,
-        });
-        partsResults.push({
-          ...part,
-          pricing: results[0],
-        });
-      }
-
-      const laborRate = await getLocalLaborRate({ city, state: "OH" });
-      const acvResult = await getACV({ vehicle });
-
-      // Compute totals
       let partsLow = 0, partsHigh = 0;
-      for (const p of partsResults) {
-        partsLow += (p.pricing?.price_low ?? 0) * (p.qty ?? 1);
-        partsHigh += (p.pricing?.price_high ?? 0) * (p.qty ?? 1);
+
+      if (webPricingData?.parts_pricing) {
+        for (const wp of webPricingData.parts_pricing) {
+          const low = wp.aftermarket_low ?? wp.oem_low ?? 100;
+          const high = wp.oem_high ?? wp.aftermarket_high ?? 400;
+          partsResults.push({
+            name: wp.name,
+            qty: 1,
+            condition_recommendation: "aftermarket",
+            pricing: { price_low: low, price_high: high, source: "web_search", web_sources: wp.sources },
+          });
+          partsLow += low;
+          partsHigh += high;
+        }
+      } else {
+        // Fallback to simulated
+        const { searchParts, getLocalLaborRate: _glr } = await import("../tools/pricing.js");
+        for (const part of visionOutput.parts_needed ?? []) {
+          const results = await searchParts({ vehicle, part_name: part.name, condition: part.condition_recommendation });
+          partsResults.push({ ...part, pricing: results[0] });
+          partsLow += (results[0]?.price_low ?? 0) * (part.qty ?? 1);
+          partsHigh += (results[0]?.price_high ?? 0) * (part.qty ?? 1);
+        }
       }
+
+      const laborRateValue = webPricingData?.labor_rate?.rate_per_hour ?? 65;
+      const laborRateSources = webPricingData?.labor_rate?.sources ?? ["simulated"];
+      const laborRate = { rate_per_hour: laborRateValue, locality: `${city}, OH`, sources: laborRateSources };
 
       let laborHours = 0;
       for (const op of visionOutput.labor_operations ?? []) {
         laborHours += op.estimated_hours ?? 0;
       }
-      const laborTotal = Math.round(laborHours * laborRate.rate_per_hour);
+      const laborTotal = Math.round(laborHours * laborRateValue);
 
       const estimateLow = partsLow + laborTotal;
       const estimateHigh = partsHigh + laborTotal;
 
-      // Total loss calculation
+      const acvResult = await getACV({ vehicle });
       const acv = acvResult.actual_cash_value;
       const salvageValue = Math.round(acv * SALVAGE_PCT);
       const totalLoss = estimateHigh + salvageValue >= acv;
@@ -201,7 +342,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
         parts: partsResults,
         labor: (visionOutput.labor_operations ?? []).map((op: any) => ({
           ...op,
-          basis: `${laborRate.rate_per_hour}/hr`,
+          basis: `${laborRateValue}/hr`,
         })),
         labor_rate: laborRate,
         totals: {
@@ -217,8 +358,16 @@ export async function assessmentRoutes(app: FastifyInstance) {
         acv: acvResult,
         vision_confidence: visionOutput.confidence ?? 0.5,
         model: VISION_MODEL,
+        web_search_model: WEB_SEARCH_MODEL,
         usage: visionData.usage,
+        web_search: {
+          queries: webPricingData?.search_queries ?? [],
+          citations: webSearchResult?.citations ?? [],
+          pricing_source: webPricingData ? "web_search" : "simulated",
+        },
       };
+
+      await emitRunEvent("stage.completed", report);
 
       const ended = new Date();
       await db.updateRunStatus(runId, "SUCCEEDED", {
@@ -226,10 +375,12 @@ export async function assessmentRoutes(app: FastifyInstance) {
         duration_ms: ended.getTime() - started.getTime(),
         model: VISION_MODEL,
         usage: visionData.usage,
+        output_json: report,
       });
 
       return report;
     } catch (err: any) {
+      await emitRunEvent("stage.failed", { error: err.message });
       const ended = new Date();
       await db.updateRunStatus(runId, "FAILED", {
         ended_at: ended.toISOString(),

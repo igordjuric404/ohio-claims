@@ -45,7 +45,6 @@ export function DamagePhotoUploader({ claimId }: { claimId: string }) {
     if (files.length === 0) return;
     setUploading(true);
     setError("");
-
     try {
       for (const file of files) {
         const { upload_url } = await presignDamagePhoto(claimId, file.name, file.type);
@@ -134,7 +133,7 @@ export function DamagePhotoUploader({ claimId }: { claimId: string }) {
           <div className="report-section">
             <h4>Parts Estimate</h4>
             <table className="admin-table">
-              <thead><tr><th>Part</th><th>Qty</th><th>Condition</th><th>Low</th><th>High</th></tr></thead>
+              <thead><tr><th>Part</th><th>Qty</th><th>Condition</th><th>Low</th><th>High</th><th>Source</th></tr></thead>
               <tbody>
                 {(report.parts ?? []).map((p: any, i: number) => (
                   <tr key={i}>
@@ -143,6 +142,13 @@ export function DamagePhotoUploader({ claimId }: { claimId: string }) {
                     <td>{p.condition_recommendation ?? p.pricing?.condition}</td>
                     <td>${p.pricing?.price_low}</td>
                     <td>${p.pricing?.price_high}</td>
+                    <td>
+                      {p.pricing?.web_sources ? (
+                        <span className="status-badge status-succeeded" style={{ fontSize: "0.6rem" }}>web</span>
+                      ) : (
+                        <span className="status-badge" style={{ fontSize: "0.6rem", background: "rgba(145,145,141,0.15)", color: "#91918D" }}>simulated</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -152,9 +158,9 @@ export function DamagePhotoUploader({ claimId }: { claimId: string }) {
           <div className="report-section">
             <h4>Totals</h4>
             <dl className="report-totals">
-              <dt>Parts Range</dt><dd>${report.totals?.parts_total_range?.low} - ${report.totals?.parts_total_range?.high}</dd>
+              <dt>Parts Range</dt><dd>${report.totals?.parts_total_range?.low} – ${report.totals?.parts_total_range?.high}</dd>
               <dt>Labor</dt><dd>${report.totals?.labor_total} ({report.labor_rate?.rate_per_hour}/hr)</dd>
-              <dt>Estimate Range</dt><dd><strong>${report.totals?.estimate_range?.low} - ${report.totals?.estimate_range?.high}</strong></dd>
+              <dt>Estimate Range</dt><dd><strong>${report.totals?.estimate_range?.low} – ${report.totals?.estimate_range?.high}</strong></dd>
               <dt>ACV</dt><dd>${report.acv?.actual_cash_value}</dd>
               <dt>Total Loss?</dt>
               <dd>
@@ -165,6 +171,44 @@ export function DamagePhotoUploader({ claimId }: { claimId: string }) {
               </dd>
             </dl>
           </div>
+
+          {/* Web Search Evidence Section */}
+          {report.web_search && (report.web_search.citations?.length > 0 || report.web_search.queries?.length > 0) && (
+            <div className="report-section">
+              <h4>Web Search Evidence</h4>
+              <div className="web-search-evidence">
+                {report.web_search.queries?.length > 0 && (
+                  <div className="ws-block">
+                    <span className="ws-label">Search Queries</span>
+                    <ul className="ws-queries">
+                      {report.web_search.queries.map((q: string, i: number) => (
+                        <li key={i}>{q}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {report.web_search.citations?.length > 0 && (
+                  <div className="ws-block">
+                    <span className="ws-label">Sources Found ({report.web_search.citations.length})</span>
+                    <div className="ws-citations">
+                      {report.web_search.citations.map((c: any, i: number) => (
+                        <div key={i} className="ws-citation">
+                          <a href={c.url} target="_blank" rel="noopener noreferrer" className="ws-citation-url">{c.title || c.url}</a>
+                          {c.content && <p className="ws-citation-excerpt">{c.content}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="ws-block">
+                  <span className="ws-label">Pricing Source</span>
+                  <span className={`status-badge ${report.web_search.pricing_source === "web_search" ? "status-succeeded" : ""}`}>
+                    {report.web_search.pricing_source}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -1,0 +1,91 @@
+{
+  "version": "test-v3",
+  "total": 3,
+  "completed_ok": 3,
+  "with_errors": 0,
+  "outcomes": {
+    "approved": 3
+  },
+  "avg_stages_completed": 6.0,
+  "with_images": 3,
+  "results": [
+    {
+      "case_id": "TC01",
+      "case_name": "Parking lot scratch",
+      "claim_id": "CLM-FTwYNfRKLlsU",
+      "actual_outcome": "approved",
+      "final_stage": "PAID",
+      "stages_completed": [
+        "FRONTDESK_DONE",
+        "COVERAGE_DONE",
+        "ASSESSMENT_DONE",
+        "FRAUD_DONE",
+        "FINAL_DECISION_DONE",
+        "PAID"
+      ],
+      "num_stages": 6,
+      "errors": [],
+      "run_ids": [
+        "01KHXXPR48SW8N9871CKYKSFF4",
+        "01KHXXPSCCPMKCZMPSAKMMSGAZ",
+        "01KHXXPTKW8MYYXG3P476220BM",
+        "01KHXXPWCBHJ1E3S8BN0HDRMHP",
+        "01KHXXPXQ7GPJNS4ABJXZS2X4J",
+        "01KHXXPZ8AEP0S2SF3TT2NMYX7"
+      ],
+      "has_image": true
+    },
+    {
+      "case_id": "TC02",
+      "case_name": "Rear-end at stoplight",
+      "claim_id": "CLM-DU3nlkpxHvbT",
+      "actual_outcome": "approved",
+      "final_stage": "PAID",
+      "stages_completed": [
+        "FRONTDESK_DONE",
+        "COVERAGE_DONE",
+        "ASSESSMENT_DONE",
+        "FRAUD_DONE",
+        "FINAL_DECISION_DONE",
+        "PAID"
+      ],
+      "num_stages": 6,
+      "errors": [],
+      "run_ids": [
+        "01KHXXQ1KJJCZG390NC016DXBT",
+        "01KHXXQ2V7H0K3FEJJKSKMBDXA",
+        "01KHXXQ40R77RKAMEX8VV8VMT6",
+        "01KHXXQ5X3G5Z7T1WDQ261W0NW",
+        "01KHXXQ725233KVDW4667R67BJ",
+        "01KHXXQ8J7JS41ETYFF55219C5"
+      ],
+      "has_image": true
+    },
+    {
+      "case_id": "TC03",
+      "case_name": "Intersection collision",
+      "claim_id": "CLM-cMncfupkrrm9",
+      "actual_outcome": "approved",
+      "final_stage": "PAID",
+      "stages_completed": [
+        "FRONTDESK_DONE",
+        "COVERAGE_DONE",
+        "ASSESSMENT_DONE",
+        "FRAUD_DONE",
+        "FINAL_DECISION_DONE",
+        "PAID"
+      ],
+      "num_stages": 6,
+      "errors": [],
+      "run_ids": [
+        "01KHXXQBBP7WTRKQJP82N55AMS",
+        "01KHXXQCEBPPFNW0KXMDAHN26Q",
+        "01KHXXQDP8C4ZGAMJ5EF03MZFS",
+        "01KHXXQFNTS3G9ZRAVEQGVQD9E",
+        "01KHXXQGPCXCF4C60WTCFFRSXG",
+        "01KHXXQJ743G3PZKSVJEVGW886"
+      ],
+      "has_image": true
+    }
+  ]
+}

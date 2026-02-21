@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { requireAdmin } from "../../middleware/adminAuth.js";
 import * as db from "../../storage/index.js";
+import { listByPrefix, createPresignedGetUrl } from "../../storage/s3.js";
 
 export async function adminClaimsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", requireAdmin);
@@ -36,5 +37,27 @@ export async function adminClaimsRoutes(app: FastifyInstance) {
     const events = await db.getEvents(id);
     const runs = await db.getRunsForClaim(id);
     return { claim, events, runs };
+  });
+
+  app.get("/admin/claims/:id/photos", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    try {
+      const keys = await listByPrefix(`claims/${id}/damage_photos/`);
+      const photos = await Promise.all(
+        keys.map(async (key) => ({
+          key,
+          filename: key.split("/").pop() ?? key,
+          url: await createPresignedGetUrl(key, 3600),
+        }))
+      );
+      return { photos };
+    } catch (err: any) {
+      return { photos: [], error: err.message };
+    }
+  });
+
+  app.delete("/admin/claims/purge-all", async () => {
+    const result = await db.purgeAllClaims();
+    return { ...result, message: `Purged ${result.claims} claims and ${result.events} events` };
   });
 }

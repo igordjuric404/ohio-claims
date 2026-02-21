@@ -1,0 +1,352 @@
+[
+  {
+    "id": "TC01",
+    "name": "Parking lot scratch",
+    "has_image": true,
+    "image_file": "image1.png",
+    "image_content_type": "image/png",
+    "claim": {
+      "policy_id": "POL-OH-00101",
+      "claimant": { "full_name": "Sarah Miller", "phone": "614-555-0101", "email": "sarah.m@email.com", "address": "1234 Main St, Columbus, OH 43215" },
+      "loss": { "date_of_loss": "2026-02-10", "city": "Columbus", "description": "Someone scratched my car in the Kroger parking lot while I was shopping. I noticed it when I came back to my car after about 30 minutes." },
+      "vehicle": { "vin": "1HGBH41JXMN109186", "year": 2015, "make": "Honda", "model": "Civic" }
+    }
+  },
+  {
+    "id": "TC02",
+    "name": "Rear-end at stoplight",
+    "has_image": true,
+    "image_file": "image2.webp",
+    "image_content_type": "image/webp",
+    "claim": {
+      "policy_id": "POL-OH-00102",
+      "claimant": { "full_name": "James Wilson", "phone": "614-555-0102", "email": "jwilson@email.com" },
+      "loss": { "date_of_loss": "2026-02-08", "city": "Cleveland", "description": "I was stopped at a red light on Euclid Ave and got rear-ended. The other driver said they were looking at their phone. We exchanged info and I took photos." },
+      "vehicle": { "vin": "2HGFA16558H300001", "year": 2022, "make": "Honda", "model": "Accord" }
+    }
+  },
+  {
+    "id": "TC03",
+    "name": "Intersection collision",
+    "has_image": true,
+    "image_file": "image3.jpg",
+    "image_content_type": "image/jpeg",
+    "claim": {
+      "policy_id": "POL-OH-00103",
+      "claimant": { "full_name": "Elizabeth Chang", "phone": "614-555-0103", "email": "echang@luxmail.com", "address": "789 Wealthy Lane, Dublin, OH 43017" },
+      "loss": { "date_of_loss": "2026-02-05", "city": "Dublin", "description": "Another car ran a red light and t-boned me at the intersection of Sawmill and 161. Police came and filed report #2026-0205-DUB. My front end is pretty messed up." },
+      "vehicle": { "vin": "WBAPH5C59BA271001", "year": 2024, "make": "BMW", "model": "530i" }
+    }
+  },
+  {
+    "id": "TC04",
+    "name": "Hailstorm damage",
+    "has_image": true,
+    "image_file": "image4.webp",
+    "image_content_type": "image/webp",
+    "claim": {
+      "policy_id": "POL-OH-00104",
+      "claimant": { "full_name": "Robert Johnson", "phone": "614-555-0104" },
+      "loss": { "date_of_loss": "2026-01-28", "city": "Akron", "description": "We had that big hailstorm on January 28th. My truck was parked outside and now the hood and roof have tons of little dents. Windows are fine though." },
+      "vehicle": { "year": 2014, "make": "Ford", "model": "F-150" }
+    }
+  },
+  {
+    "id": "TC05",
+    "name": "Delivery truck sideswipe",
+    "has_image": true,
+    "image_file": "image5.jpg",
+    "image_content_type": "image/jpeg",
+    "claim": {
+      "policy_id": "POL-OH-00105",
+      "claimant": { "full_name": "Maria Garcia", "phone": "614-555-0105", "email": "mgarcia@email.com" },
+      "loss": { "date_of_loss": "2026-02-12", "city": "Toledo", "description": "A delivery truck side-swiped my car in the Walmart parking lot. My left side is scratched up and the mirror is broken. The truck drove off but the store has security cameras." },
+      "vehicle": { "year": 2021, "make": "Toyota", "model": "RAV4" }
+    }
+  },
+  {
+    "id": "TC06",
+    "name": "Driveway backing incident",
+    "has_image": true,
+    "image_file": "image6.jpg",
+    "image_content_type": "image/jpeg",
+    "claim": {
+      "policy_id": "POL-OH-00106",
+      "claimant": { "full_name": "David Kim", "phone": "614-555-0106", "email": "dkim@email.com", "address": "456 Oak Ave, Dayton, OH 45401" },
+      "loss": { "date_of_loss": "2026-02-14", "city": "Dayton", "description": "My neighbor backed into my car that was parked in the driveway. The rear bumper is cracked. Neighbor admits fault and gave me their insurance info." },
+      "vehicle": { "vin": "3N1AB7AP8GY300001", "year": 2018, "make": "Nissan", "model": "Sentra" }
+    }
+  },
+  {
+    "id": "TC07",
+    "name": "Highway multi-vehicle pileup",
+    "has_image": true,
+    "image_file": "image7.jpg",
+    "image_content_type": "image/jpeg",
+    "claim": {
+      "policy_id": "POL-OH-00107",
+      "claimant": { "full_name": "Jennifer Brown", "phone": "614-555-0107" },
+      "loss": { "date_of_loss": "2026-02-01", "city": "Cincinnati", "description": "There was a chain reaction accident on I-71 during rush hour. I got hit from behind and then pushed into the car in front of me. Front bumper, hood, and right fender are damaged. No airbags went off." },
+      "vehicle": { "year": 2020, "make": "Chevrolet", "model": "Malibu" }
+    }
+  },
+  {
+    "id": "TC08",
+    "name": "Rock chip windshield",
+    "has_image": true,
+    "image_file": "image8.jpg",
+    "image_content_type": "image/jpeg",
+    "claim": {
+      "policy_id": "POL-OH-00108",
+      "claimant": { "full_name": "Andrew Thompson", "phone": "614-555-0108", "email": "athompson@email.com" },
+      "loss": { "date_of_loss": "2026-02-15", "city": "Columbus", "description": "A rock got kicked up by a dump truck on I-270 and cracked my windshield all the way across. Just windshield damage, nothing else." },
+      "vehicle": { "year": 2025, "make": "Hyundai", "model": "Tucson" }
+    }
+  },
+  {
+    "id": "TC09",
+    "name": "Deer collision",
+    "has_image": true,
+    "image_file": "image9.webp",
+    "image_content_type": "image/webp",
+    "claim": {
+      "policy_id": "POL-OH-00109",
+      "claimant": { "full_name": "Patricia Davis", "phone": "614-555-0109" },
+      "loss": { "date_of_loss": "2026-02-07", "city": "Youngstown", "description": "Hit a deer on Route 11 around 6pm. The front end is badly damaged - bumper is hanging off, hood is bent, and both headlights are smashed." },
+      "vehicle": { "year": 2008, "make": "Chevrolet", "model": "Cobalt" }
+    }
+  },
+  {
+    "id": "TC10",
+    "name": "Vandalism keying",
+    "has_image": true,
+    "image_file": "image10.jpg",
+    "image_content_type": "image/jpeg",
+    "claim": {
+      "policy_id": "POL-OH-00110",
+      "claimant": { "full_name": "Michael Scott", "phone": "614-555-0110", "email": "mscott@dundermifflin.com", "address": "1725 Slough Ave, Scranton, OH 43201" },
+      "loss": { "date_of_loss": "2026-02-11", "city": "Columbus", "description": "My car was keyed overnight in the parking garage at my apartment. Deep scratch along the entire driver side. I filed a police report." },
+      "vehicle": { "year": 2023, "make": "Mercedes-Benz", "model": "C300" }
+    }
+  },
+  {
+    "id": "TC11",
+    "name": "Clean rear-end claim",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00111",
+      "claimant": { "full_name": "Laura Martinez", "phone": "614-555-0111", "email": "lmartinez@email.com", "address": "567 Elm St, Columbus, OH 43215" },
+      "loss": { "date_of_loss": "2026-02-13", "city": "Columbus", "description": "Rear-ended at a red light on High Street. The other driver's insurance already accepted liability. Minor bumper dent." },
+      "vehicle": { "vin": "1G1YY22G965100001", "year": 2020, "make": "Toyota", "model": "Camry" }
+    }
+  },
+  {
+    "id": "TC12",
+    "name": "Storm tree branch",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00112",
+      "claimant": { "full_name": "Thomas Anderson", "phone": "614-555-0112" },
+      "loss": { "date_of_loss": "2026-01-30", "city": "Mansfield", "description": "During the ice storm a big tree branch fell on my car while it was parked on the street. Dented the roof and cracked the back window." },
+      "vehicle": { "year": 2019, "make": "Subaru", "model": "Outback" }
+    }
+  },
+  {
+    "id": "TC13",
+    "name": "Lapsed policy fender bender",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-LAPSED-001",
+      "claimant": { "full_name": "Randy Phillips", "phone": "614-555-0113" },
+      "loss": { "date_of_loss": "2026-02-10", "city": "Columbus", "description": "Got into a fender bender in a parking lot. The other person hit me while backing out of a space." },
+      "vehicle": { "year": 2016, "make": "Kia", "model": "Forte" }
+    }
+  },
+  {
+    "id": "TC14",
+    "name": "Rideshare accident",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00114",
+      "claimant": { "full_name": "Alex Rivera", "phone": "614-555-0114" },
+      "loss": { "date_of_loss": "2026-02-09", "city": "Akron", "description": "I was doing Uber Eats deliveries and hit a pole while trying to find the delivery address. I was looking at my phone for the GPS." },
+      "vehicle": { "year": 2017, "make": "Honda", "model": "Fit" }
+    }
+  },
+  {
+    "id": "TC15",
+    "name": "Suspicious total loss",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-NEW-001",
+      "claimant": { "full_name": "Frank Morrison", "phone": "614-555-0115" },
+      "loss": { "date_of_loss": "2026-02-16", "city": "Cleveland", "description": "My car was found burned in an empty parking lot. I wasn't there when it happened. I just got the policy last week." },
+      "vehicle": { "year": 2023, "make": "BMW", "model": "X5" }
+    }
+  },
+  {
+    "id": "TC16",
+    "name": "Old rust damage",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00116",
+      "claimant": { "full_name": "Betty Morton", "phone": "614-555-0116" },
+      "loss": { "date_of_loss": "2026-02-14", "city": "Toledo", "description": "Someone hit my car in a parking lot. The front end has damage from the collision." },
+      "vehicle": { "year": 2010, "make": "Dodge", "model": "Charger" }
+    }
+  },
+  {
+    "id": "TC17",
+    "name": "Late night hit and run",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00117",
+      "claimant": { "full_name": "Carl Stevens", "phone": "614-555-0117", "email": "carl.s@tempmail.net" },
+      "loss": { "date_of_loss": "2026-02-13", "city": "Youngstown", "description": "Got rear-ended by someone who then drove off. It was around 2 AM on an empty road. I had three friends in the car and we all got hurt. This is the 4th time something like this has happened to me." },
+      "vehicle": { "year": 2012, "make": "Nissan", "model": "Altima" }
+    }
+  },
+  {
+    "id": "TC18",
+    "name": "Parking lot low speed bump",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00118",
+      "claimant": { "full_name": "Donna Reeves", "phone": "614-555-0118" },
+      "loss": { "date_of_loss": "2026-02-11", "city": "Columbus", "description": "Someone tapped my car at like 2 mph in the grocery store parking lot. I think the whole frame might be bent and I need a new engine. My neck hurts really bad too." },
+      "vehicle": { "year": 2019, "make": "Toyota", "model": "Corolla" }
+    }
+  },
+  {
+    "id": "TC19",
+    "name": "Minimal info claim",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00119",
+      "claimant": { "full_name": "Incomplete Info", "phone": "" },
+      "loss": { "date_of_loss": "2026-02-10", "city": "Dayton", "description": "Bumper got hit in a parking lot." },
+      "vehicle": { "year": 2020, "make": "Hyundai", "model": "Elantra" }
+    }
+  },
+  {
+    "id": "TC20",
+    "name": "No vehicle details",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00120",
+      "claimant": { "full_name": "Jane Harper", "phone": "614-555-0120", "email": "jane@email.com" },
+      "loss": { "date_of_loss": "2026-02-12", "city": "Columbus", "description": "Fender bender at the mall. Someone hit my car's rear quarter panel while I was inside shopping." },
+      "vehicle": {}
+    }
+  },
+  {
+    "id": "TC21",
+    "name": "Very late filing",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00121",
+      "claimant": { "full_name": "Larry Walters", "phone": "614-555-0121" },
+      "loss": { "date_of_loss": "2025-06-15", "city": "Cleveland", "description": "Hit and run back in June. I didn't think my insurance covered this so I waited. The bumper and fender have moderate damage." },
+      "vehicle": { "year": 2021, "make": "Chevrolet", "model": "Equinox" }
+    }
+  },
+  {
+    "id": "TC22",
+    "name": "Highway guardrail crash",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00122",
+      "claimant": { "full_name": "Rich Richards", "phone": "614-555-0122", "email": "rich@wealthy.com", "address": "1 Mansion Dr, Upper Arlington, OH 43221" },
+      "loss": { "date_of_loss": "2026-02-03", "city": "Upper Arlington", "description": "I hydroplaned on 315 in the rain and hit the guardrail going about 55. Front end is destroyed and airbags went off. Car had to be towed." },
+      "vehicle": { "vin": "WP0AB2A78HL000001", "year": 2025, "make": "Porsche", "model": "911 Carrera" }
+    }
+  },
+  {
+    "id": "TC23",
+    "name": "Flood damage",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00123",
+      "claimant": { "full_name": "Walter Bennett", "phone": "614-555-0123" },
+      "loss": { "date_of_loss": "2026-01-25", "city": "Cincinnati", "description": "The heavy rain flooded the parking garage at my work. Water got up above the seats. Engine won't start and the whole interior is waterlogged." },
+      "vehicle": { "year": 2019, "make": "Ford", "model": "Escape" }
+    }
+  },
+  {
+    "id": "TC24",
+    "name": "Stolen and recovered",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00124",
+      "claimant": { "full_name": "Steve Morrison", "phone": "614-555-0124", "email": "steve@email.com" },
+      "loss": { "date_of_loss": "2026-02-06", "city": "Columbus", "description": "My car was stolen from my apartment parking lot on Feb 6. Columbus PD found it on Feb 10 with front bumper damage, broken ignition column, and stripped interior. Report #2026-CPD-8821." },
+      "vehicle": { "year": 2017, "make": "Honda", "model": "Accord" }
+    }
+  },
+  {
+    "id": "TC25",
+    "name": "Phantom hit and run",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00125",
+      "claimant": { "full_name": "George Palmer", "phone": "614-555-0125" },
+      "loss": { "date_of_loss": "2026-02-15", "city": "Akron", "description": "A black sedan hit me on the highway and drove off. No one else was around. My rear bumper has a dent but I didn't get a plate number." },
+      "vehicle": { "year": 2015, "make": "Chevrolet", "model": "Cruze" }
+    }
+  },
+  {
+    "id": "TC26",
+    "name": "High value mod claim",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00126",
+      "claimant": { "full_name": "Mike Torres", "phone": "614-555-0126" },
+      "loss": { "date_of_loss": "2026-02-08", "city": "Toledo", "description": "Total loss. My car is worth about $85,000 because of all the custom work I've done to it. It was hit while parked on the street." },
+      "vehicle": { "year": 2012, "make": "Honda", "model": "Civic" }
+    }
+  },
+  {
+    "id": "TC27",
+    "name": "Gas station back-up",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00127",
+      "claimant": { "full_name": "Dan Cooper", "phone": "614-555-0127", "email": "dan@email.com" },
+      "loss": { "date_of_loss": "2026-02-09", "city": "Columbus", "description": "Someone backed into me at the gas station. My rear bumper and trunk are dented." },
+      "vehicle": { "year": 2022, "make": "Kia", "model": "K5" }
+    }
+  },
+  {
+    "id": "TC28",
+    "name": "Multi-car suspicious accident",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00128",
+      "claimant": { "full_name": "Ray Lewis", "phone": "614-555-0128" },
+      "loss": { "date_of_loss": "2026-02-12", "city": "Cleveland", "description": "Multi-car accident with 5 vehicles. All the drivers are going to the same doctor for treatment. We all just got our policies around the same time from the same agent." },
+      "vehicle": { "year": 2011, "make": "Chrysler", "model": "200" }
+    }
+  },
+  {
+    "id": "TC29",
+    "name": "Shopping cart door ding",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00129",
+      "claimant": { "full_name": "Carl Anderson", "phone": "614-555-0129", "email": "carl@email.com" },
+      "loss": { "date_of_loss": "2026-02-16", "city": "Dublin", "description": "A shopping cart rolled into my passenger door at Costco. Small dent about 2 inches wide with a paint chip." },
+      "vehicle": { "year": 2026, "make": "Ford", "model": "F-250" }
+    }
+  },
+  {
+    "id": "TC30",
+    "name": "Street racing crash",
+    "has_image": false,
+    "claim": {
+      "policy_id": "POL-OH-00130",
+      "claimant": { "full_name": "Rick Nelson", "phone": "614-555-0130" },
+      "loss": { "date_of_loss": "2026-02-14", "city": "Columbus", "description": "Lost control and hit a wall on Morse Road at around 1 AM. I was racing another car. Got a ticket for reckless driving." },
+      "vehicle": { "year": 2020, "make": "Dodge", "model": "Challenger" }
+    }
+  }
+]

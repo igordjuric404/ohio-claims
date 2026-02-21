@@ -127,3 +127,19 @@ export async function updateIntakeJob(jobId: string, updates: Record<string, unk
 export async function scanIntakeJobs(limit = 50) {
   return [...intakeJobs.values()].slice(0, limit);
 }
+
+export async function purgeAllClaims() {
+  const c = claims.size;
+  const e = [...events.values()].reduce((n, arr) => n + arr.length, 0);
+  claims.clear();
+  events.clear();
+  return { claims: c, events: e };
+}
+
+export async function purgeAllRuns() {
+  const r = runs.size;
+  const e = [...runEvents.values()].reduce((n, arr) => n + arr.length, 0);
+  runs.clear();
+  runEvents.clear();
+  return { runs: r, run_events: e };
+}

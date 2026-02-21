@@ -34,3 +34,7 @@ export const putIntakeJob = useMemory ? memory.putIntakeJob : dynamo.putIntakeJo
 export const getIntakeJob = useMemory ? memory.getIntakeJob : dynamo.getIntakeJob;
 export const updateIntakeJob = useMemory ? memory.updateIntakeJob : dynamo.updateIntakeJob;
 export const scanIntakeJobs = useMemory ? memory.scanIntakeJobs : dynamo.scanIntakeJobs;
+
+// Purge (admin)
+export const purgeAllClaims = useMemory ? memory.purgeAllClaims : dynamo.purgeAllClaims;
+export const purgeAllRuns = useMemory ? memory.purgeAllRuns : dynamo.purgeAllRuns;

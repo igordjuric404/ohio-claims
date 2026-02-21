@@ -1,21 +1,32 @@
 import { useState } from 'react';
 import { ClaimForm } from './components/ClaimForm';
-import { ClaimView } from './components/ClaimView';
+import { ClientConfirmation } from './components/ClientConfirmation';
 import { AutomaticIntakePage } from './intake/AutomaticIntakePage';
 import { AdminApp } from './admin/AdminApp';
+import { ReviewerApp } from './reviewer/ReviewerApp';
+import { runPipeline } from './api';
 import './App.css';
 
 type Tab = 'manual' | 'auto-intake';
 
 function PublicApp() {
-  const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
+  const [submittedClaimId, setSubmittedClaimId] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('manual');
 
-  if (selectedClaimId) {
+  const handleClaimSubmitted = async (claimId: string) => {
+    setSubmittedClaimId(claimId);
+    try {
+      await runPipeline(claimId);
+    } catch {
+      // Pipeline errors are non-blocking for the client; reviewer will handle
+    }
+  };
+
+  if (submittedClaimId) {
     return (
-      <ClaimView
-        claimId={selectedClaimId}
-        onBack={() => setSelectedClaimId(null)}
+      <ClientConfirmation
+        claimId={submittedClaimId}
+        onNewClaim={() => setSubmittedClaimId(null)}
       />
     );
   }
@@ -37,9 +48,9 @@ function PublicApp() {
         </button>
       </nav>
       {tab === 'manual' ? (
-        <ClaimForm onSuccess={(claimId) => setSelectedClaimId(claimId)} />
+        <ClaimForm onSuccess={handleClaimSubmitted} />
       ) : (
-        <AutomaticIntakePage onClaimCreated={(claimId) => setSelectedClaimId(claimId)} />
+        <AutomaticIntakePage onClaimCreated={handleClaimSubmitted} />
       )}
     </div>
   );
@@ -47,7 +58,9 @@ function PublicApp() {
 
 function App() {
   const isAdmin = window.location.pathname.startsWith('/admin');
+  const isReviewer = window.location.pathname.startsWith('/reviewer');
   if (isAdmin) return <AdminApp />;
+  if (isReviewer) return <ReviewerApp />;
   return <PublicApp />;
 }
 

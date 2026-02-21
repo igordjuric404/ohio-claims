@@ -1,11 +1,12 @@
 import { ulid } from "ulid";
 import { randomBytes } from "node:crypto";
-import { runAgent } from "./client.js";
+import { runAgent, loadSystemPrompt, type AgentCallOptions } from "./client.js";
 import { stageValidators } from "@ohio-claims/shared";
 import * as db from "../storage/index.js";
 import { computeEventHash, createEventSK } from "../lib/audit.js";
-import { computePaymentDeadline } from "../compliance/clock.js";
 import type { ClaimStage } from "@ohio-claims/shared";
+
+const AGENTS_NEEDING_REASONING = new Set(["claimsofficer", "assessor", "fraudanalyst"]);
 
 const PIPELINE_STAGES: Array<{
   fromStage: ClaimStage;
@@ -17,7 +18,6 @@ const PIPELINE_STAGES: Array<{
   { fromStage: "FRONTDESK_DONE", agentId: "claimsofficer", toStage: "COVERAGE_DONE", validatorKey: "COVERAGE_DONE" },
   { fromStage: "COVERAGE_DONE", agentId: "assessor", toStage: "ASSESSMENT_DONE", validatorKey: "ASSESSMENT_DONE" },
   { fromStage: "ASSESSMENT_DONE", agentId: "fraudanalyst", toStage: "FRAUD_DONE", validatorKey: "FRAUD_DONE" },
-  { fromStage: "FRAUD_DONE", agentId: "seniorreviewer", toStage: "FINAL_DECISION_DONE", validatorKey: "FINAL_DECISION_DONE" },
 ];
 
 function generateTraceId(): string {
@@ -30,6 +30,10 @@ function extractJson(text: string): unknown {
     cleaned = cleaned.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
   }
   return JSON.parse(cleaned);
+}
+
+function truncate(s: string, max: number): string {
+  return s.length > max ? s.substring(0, max) + "... [truncated]" : s;
 }
 
 async function appendEvent(
@@ -80,6 +84,10 @@ async function runStage(
   const traceId = pipelineTraceId;
   const started = new Date();
 
+  const claimSummary = JSON.stringify(claim, null, 2);
+  const prompt = `Analyze this claim and produce your structured JSON output.\n\nClaim data:\n${claimSummary}`;
+  const systemPrompt = loadSystemPrompt(agentId);
+
   const run: Record<string, unknown> = {
     run_id: runId,
     claim_id: claimId,
@@ -89,6 +97,7 @@ async function runStage(
     started_at: started.toISOString(),
     actor_id: actorId,
     trace_id: traceId,
+    input_prompt: truncate(prompt, 4000),
   };
   await db.putRun(run);
 
@@ -108,18 +117,27 @@ async function runStage(
 
   await emitRunEvent("stage.started", { agent_id: agentId, claim_id: claimId, stage: toStage });
 
-  const claimSummary = JSON.stringify(claim, null, 2);
-  const prompt = `Analyze this claim and produce your structured JSON output.\n\nClaim data:\n${claimSummary}`;
+  await emitRunEvent("agent.input", {
+    system_prompt: truncate(systemPrompt, 3000),
+    prompt: truncate(prompt, 3000),
+  });
 
   let agentText: string;
   let agentModel: string | undefined;
-  let agentUsage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | undefined;
+  let agentUsage: any;
+  let agentReasoning: string | undefined;
+
+  const callOptions: AgentCallOptions = {};
+  if (AGENTS_NEEDING_REASONING.has(agentId)) {
+    callOptions.enableReasoning = true;
+  }
 
   try {
-    const response = await runAgent(agentId, prompt, `pipeline-${claimId}`);
+    const response = await runAgent(agentId, prompt, `pipeline-${claimId}`, callOptions);
     agentText = response.text;
     agentModel = response.model;
     agentUsage = response.usage;
+    agentReasoning = response.reasoning;
   } catch (err: any) {
     const ended = new Date();
     await emitRunEvent("stage.failed", { error: err.message });
@@ -133,6 +151,7 @@ async function runStage(
   }
 
   await emitRunEvent("agent.response", { model: agentModel, usage: agentUsage });
+  await emitRunEvent("agent.raw_output", { raw_text: truncate(agentText, 5000) });
 
   let parsed: unknown;
   try {
@@ -140,7 +159,7 @@ async function runStage(
   } catch {
     const ended = new Date();
     const errMsg = `Agent ${agentId} returned invalid JSON`;
-    await emitRunEvent("stage.failed", { error: errMsg, raw_snippet: agentText.substring(0, 200) });
+    await emitRunEvent("stage.failed", { error: errMsg, raw_snippet: agentText.substring(0, 500) });
     await db.updateRunStatus(runId, "FAILED", {
       ended_at: ended.toISOString(),
       duration_ms: ended.getTime() - started.getTime(),
@@ -168,13 +187,18 @@ async function runStage(
   }
 
   const ended = new Date();
-  await emitRunEvent("stage.completed", { output_summary: Object.keys(parsed as object) });
-  await db.updateRunStatus(runId, "SUCCEEDED", {
+  await emitRunEvent("stage.completed", parsed);
+  const runUpdateData: Record<string, unknown> = {
     ended_at: ended.toISOString(),
     duration_ms: ended.getTime() - started.getTime(),
     model: agentModel,
     usage: agentUsage,
-  });
+    output_json: parsed,
+  };
+  if (agentReasoning) {
+    runUpdateData.reasoning = agentReasoning;
+  }
+  await db.updateRunStatus(runId, "SUCCEEDED", runUpdateData);
 
   await appendEvent(claimId, toStage, "STAGE_COMPLETED", parsed, eventCtx);
   await db.updateClaimStage(claimId, toStage);
@@ -219,38 +243,40 @@ export async function runPipeline(claimId: string, actorId = "system"): Promise<
     claim = await db.getClaim(claimId);
   }
 
+  // After all agent stages complete, transition to PENDING_REVIEW for human decision
   claim = await db.getClaim(claimId);
-  if (claim!.stage === "FINAL_DECISION_DONE") {
-    const srOutput = result.stage_outputs["FINAL_DECISION_DONE"] as any;
-    if (srOutput?.final_outcome === "approve") {
-      const claimSummaryForFinance = JSON.stringify(claim, null, 2);
-
-      const financeResult = await runStage(
-        claimId, "finance", "PAID", "PAID",
-        { ...claim!, _sr_decision: srOutput } as any,
-        actorId, pipelineTraceId
-      );
-      result.run_ids.push(financeResult.runId);
-
-      if (financeResult.ok) {
-        result.stages_completed.push("PAID");
-        result.stage_outputs["PAID"] = financeResult.output;
-        const paymentDue = computePaymentDeadline(new Date());
-      } else {
-        result.errors.push(financeResult.error!);
-      }
-    } else {
-      const eventCtx = { actor_id: actorId, trace_id: pipelineTraceId };
-      await appendEvent(claimId, "CLOSED_NO_PAY", "STAGE_COMPLETED", {
-        reason: srOutput?.final_outcome ?? "denied",
-        rationale: srOutput?.rationale,
-      }, eventCtx);
-      await db.updateClaimStage(claimId, "CLOSED_NO_PAY");
-      result.stages_completed.push("CLOSED_NO_PAY");
-    }
+  if (claim!.stage === "FRAUD_DONE") {
+    const eventCtx = { actor_id: actorId, trace_id: pipelineTraceId };
+    await appendEvent(claimId, "PENDING_REVIEW", "STAGE_COMPLETED", {
+      message: "Automated pipeline complete. Awaiting human reviewer decision.",
+    }, eventCtx);
+    await db.updateClaimStage(claimId, "PENDING_REVIEW");
+    result.stages_completed.push("PENDING_REVIEW");
   }
 
   claim = await db.getClaim(claimId);
   result.final_stage = claim!.stage as string;
   return result;
+}
+
+/**
+ * Run the finance agent after a human reviewer approves a claim.
+ * Called from the reviewer decision endpoint, not from the automated pipeline.
+ */
+export async function runFinanceStage(claimId: string, reviewerDecision: Record<string, unknown>, actorId = "reviewer"): Promise<{ ok: boolean; output?: unknown; error?: string; runId?: string }> {
+  const pipelineTraceId = generateTraceId();
+  const claim = await db.getClaim(claimId);
+  if (!claim) return { ok: false, error: "Claim not found" };
+
+  const financeResult = await runStage(
+    claimId, "finance", "PAID", "PAID",
+    { ...claim, _reviewer_decision: reviewerDecision } as any,
+    actorId, pipelineTraceId
+  );
+
+  if (!financeResult.ok) {
+    return { ok: false, error: financeResult.error, runId: financeResult.runId };
+  }
+
+  return { ok: true, output: financeResult.output, runId: financeResult.runId };
 }

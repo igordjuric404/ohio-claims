@@ -1,0 +1,26 @@
+{
+  "case_id": "TC03",
+  "case_name": "Intersection collision",
+  "claim_id": "CLM-cMncfupkrrm9",
+  "actual_outcome": "approved",
+  "final_stage": "PAID",
+  "stages_completed": [
+    "FRONTDESK_DONE",
+    "COVERAGE_DONE",
+    "ASSESSMENT_DONE",
+    "FRAUD_DONE",
+    "FINAL_DECISION_DONE",
+    "PAID"
+  ],
+  "num_stages": 6,
+  "errors": [],
+  "run_ids": [
+    "01KHXXQBBP7WTRKQJP82N55AMS",
+    "01KHXXQCEBPPFNW0KXMDAHN26Q",
+    "01KHXXQDP8C4ZGAMJ5EF03MZFS",
+    "01KHXXQFNTS3G9ZRAVEQGVQD9E",
+    "01KHXXQGPCXCF4C60WTCFFRSXG",
+    "01KHXXQJ743G3PZKSVJEVGW886"
+  ],
+  "has_image": true
+}

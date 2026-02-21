@@ -1,0 +1,26 @@
+{
+  "case_id": "TC02",
+  "case_name": "Rear-end at stoplight",
+  "claim_id": "CLM-DU3nlkpxHvbT",
+  "actual_outcome": "approved",
+  "final_stage": "PAID",
+  "stages_completed": [
+    "FRONTDESK_DONE",
+    "COVERAGE_DONE",
+    "ASSESSMENT_DONE",
+    "FRAUD_DONE",
+    "FINAL_DECISION_DONE",
+    "PAID"
+  ],
+  "num_stages": 6,
+  "errors": [],
+  "run_ids": [
+    "01KHXXQ1KJJCZG390NC016DXBT",
+    "01KHXXQ2V7H0K3FEJJKSKMBDXA",
+    "01KHXXQ40R77RKAMEX8VV8VMT6",
+    "01KHXXQ5X3G5Z7T1WDQ261W0NW",
+    "01KHXXQ725233KVDW4667R67BJ",
+    "01KHXXQ8J7JS41ETYFF55219C5"
+  ],
+  "has_image": true
+}

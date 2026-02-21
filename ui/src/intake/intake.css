@@ -1,56 +1,61 @@
 /* Intake Page */
-.intake-page { max-width: 900px; margin: 0 auto; padding: 2rem; }
-.intake-page h1 { margin-bottom: 1.5rem; }
+.intake-page { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+.intake-page h1 { margin-bottom: 1.25rem; color: var(--accent-primary); }
 
-.intake-upload { display: flex; flex-direction: column; gap: 1rem; }
-.intake-file-list { list-style: disc; padding-left: 1.5rem; font-size: 0.9rem; }
-.intake-file-list li { color: var(--text-secondary, #888); }
+.intake-upload { display: flex; flex-direction: column; gap: 0.75rem; }
+.intake-file-list { list-style: disc; padding-left: 1.5rem; font-size: 0.85rem; }
+.intake-file-list li { color: var(--mid-500); }
 
-.intake-extracting { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 3rem; }
+.intake-extracting { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 2.5rem; }
 
 /* Review Fields */
 .intake-fields-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-  margin: 1rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0;
 }
 
 .intake-fields-grid label {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.85rem;
-  color: var(--text-secondary, #888);
+  gap: 0.2rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--mid-500);
 }
 
 .intake-fields-grid input, .intake-fields-grid textarea {
-  padding: 0.5rem 0.75rem;
-  background: var(--bg-primary, #0a0a0f);
-  border: 1px solid var(--border, #222);
-  border-radius: 6px;
-  color: var(--text-primary, #f0f0f5);
-  font-size: 0.9rem;
+  padding: 0.45rem 0.65rem;
+  background: var(--dark-900);
+  border: 1px solid var(--dark-700);
+  border-radius: var(--radius-sm);
+  color: var(--light-200);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.intake-fields-grid input:focus, .intake-fields-grid textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
 }
 
 .intake-actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   justify-content: flex-end;
-  margin-top: 1.5rem;
+  margin-top: 1.25rem;
 }
 
 /* Confidence Badges */
 .conf-badge {
   display: inline-block;
-  padding: 0.1rem 0.4rem;
+  padding: 0.08rem 0.35rem;
   border-radius: 3px;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  margin-left: 0.5rem;
+  margin-left: 0.4rem;
 }
 
-.conf-high { background: rgba(34,197,94,0.15); color: #22c55e; }
-.conf-med { background: rgba(234,179,8,0.15); color: #eab308; }
-.conf-low { background: rgba(239,68,68,0.15); color: #ef4444; }
+.conf-high { background: rgba(90,154,107,0.15); color: var(--color-success); }
+.conf-med { background: rgba(201,167,78,0.15); color: var(--color-warning); }
+.conf-low { background: rgba(196,84,84,0.15); color: var(--color-error); }

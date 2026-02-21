@@ -2,24 +2,16 @@ import { useState, useEffect } from 'react';
 import { getClaim, runPipeline, type Claim, type ClaimEvent, type PipelineResult } from '../api';
 import { Timeline } from './Timeline';
 import { DamagePhotoUploader } from '../claims/components/DamagePhotoUploader';
+import { stageName } from '../admin/displayNames';
+import { formatDateTime } from '../lib/fieldLabels';
 
 type ClaimViewProps = {
   claimId: string;
   onBack: () => void;
 };
 
-function formatStage(stage: string): string {
-  return stage
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-    .trim();
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
+function canRunPipeline(stage: string): boolean {
+  return stage === "FNOL_SUBMITTED";
 }
 
 export function ClaimView({ claimId, onBack }: ClaimViewProps) {
@@ -75,9 +67,7 @@ export function ClaimView({ claimId, onBack }: ClaimViewProps) {
   if (error || !claim) {
     return (
       <div className="claim-view claim-view--error">
-        <button onClick={onBack} className="btn btn-secondary">
-          ← Back
-        </button>
+        <button onClick={onBack} className="btn btn-secondary">← Back</button>
         <div className="card card--error">
           <p>{error || 'Claim not found'}</p>
         </div>
@@ -93,15 +83,15 @@ export function ClaimView({ claimId, onBack }: ClaimViewProps) {
     comp.payment_due_at && { label: 'Payment Due', value: comp.payment_due_at },
   ].filter(Boolean) as { label: string; value: string }[];
 
+  const showPipelineBtn = canRunPipeline(claim.stage) && !pipelineResult;
+
   return (
     <div className="claim-view">
       <div className="claim-view-header">
-        <button onClick={onBack} className="btn btn-secondary btn-back">
-          ← Back
-        </button>
+        <button onClick={onBack} className="btn btn-secondary btn-back">← Back</button>
         <h1>Claim {claim.claim_id}</h1>
         <span className={`claim-view-stage claim-view-stage--${claim.stage.toLowerCase().replace(/_/g, '-')}`}>
-          {formatStage(claim.stage)}
+          {stageName(claim.stage)}
         </span>
       </div>
 
@@ -112,7 +102,7 @@ export function ClaimView({ claimId, onBack }: ClaimViewProps) {
             <dt>Policy</dt>
             <dd>{claim.policy_id}</dd>
             <dt>Created</dt>
-            <dd>{formatDate(claim.created_at)}</dd>
+            <dd>{formatDateTime(claim.created_at)}</dd>
             <dt>Claimant</dt>
             <dd>{claim.claimant.full_name}</dd>
             <dt>Phone</dt>
@@ -151,7 +141,7 @@ export function ClaimView({ claimId, onBack }: ClaimViewProps) {
               {deadlines.map((d) => (
                 <li key={d.label}>
                   <span className="deadline-label">{d.label}</span>
-                  <span className="deadline-value">{formatDate(d.value)}</span>
+                  <span className="deadline-value">{formatDateTime(d.value)}</span>
                 </li>
               ))}
             </ul>
@@ -162,20 +152,26 @@ export function ClaimView({ claimId, onBack }: ClaimViewProps) {
 
         <section className="card claim-pipeline">
           <h2>Pipeline</h2>
-          <button
-            onClick={handleRunPipeline}
-            disabled={pipelineRunning}
-            className="btn btn-primary btn-pipeline"
-          >
-            {pipelineRunning ? (
-              <>
-                <span className="btn-spinner" />
-                Running...
-              </>
-            ) : (
-              'Run Pipeline'
-            )}
-          </button>
+          {showPipelineBtn ? (
+            <button
+              onClick={handleRunPipeline}
+              disabled={pipelineRunning}
+              className="btn btn-primary btn-pipeline"
+            >
+              {pipelineRunning ? (
+                <>
+                  <span className="btn-spinner" />
+                  Running...
+                </>
+              ) : (
+                'Run Pipeline'
+              )}
+            </button>
+          ) : !pipelineResult ? (
+            <p className="pipeline-completed-msg">
+              Pipeline already completed — stage: <strong>{stageName(claim.stage)}</strong>
+            </p>
+          ) : null}
           {pipelineError && (
             <div className="pipeline-error" role="alert">
               {pipelineError}
@@ -192,11 +188,13 @@ export function ClaimView({ claimId, onBack }: ClaimViewProps) {
                 </ul>
               )}
               <p>
-                <strong>Final stage:</strong> {formatStage(pipelineResult.final_stage)}
+                <strong>Final stage:</strong> {stageName(pipelineResult.final_stage)}
               </p>
-              <p>
-                <strong>Completed:</strong> {pipelineResult.stages_completed.join(', ') || '—'}
-              </p>
+              {pipelineResult.stages_completed.length > 0 && (
+                <p>
+                  <strong>Stages completed:</strong> {pipelineResult.stages_completed.map(s => stageName(s)).join(' → ')}
+                </p>
+              )}
               {Object.keys(pipelineResult.stage_outputs).length > 0 && (
                 <details className="stage-outputs">
                   <summary>Stage outputs</summary>

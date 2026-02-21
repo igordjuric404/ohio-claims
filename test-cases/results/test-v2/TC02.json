@@ -1,0 +1,12 @@
+{
+  "case_id": "TC02",
+  "case_name": "Rear-end at stoplight",
+  "claim_id": "CLM-GSAV-r1vVxJL",
+  "actual_outcome": "unknown",
+  "final_stage": "PARSE_ERROR",
+  "stages_completed": [],
+  "num_stages": 0,
+  "errors": [],
+  "run_ids": [],
+  "has_image": true
+}

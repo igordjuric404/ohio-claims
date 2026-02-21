@@ -1,0 +1,49 @@
+{
+  "version": "test-v2",
+  "total": 3,
+  "completed_ok": 3,
+  "with_errors": 0,
+  "outcomes": {
+    "unknown": 3
+  },
+  "avg_stages_completed": 0.0,
+  "with_images": 3,
+  "results": [
+    {
+      "case_id": "TC01",
+      "case_name": "Parking lot scratch",
+      "claim_id": "CLM-vx9PzZ1M7udC",
+      "actual_outcome": "unknown",
+      "final_stage": "PARSE_ERROR",
+      "stages_completed": [],
+      "num_stages": 0,
+      "errors": [],
+      "run_ids": [],
+      "has_image": true
+    },
+    {
+      "case_id": "TC02",
+      "case_name": "Rear-end at stoplight",
+      "claim_id": "CLM-GSAV-r1vVxJL",
+      "actual_outcome": "unknown",
+      "final_stage": "PARSE_ERROR",
+      "stages_completed": [],
+      "num_stages": 0,
+      "errors": [],
+      "run_ids": [],
+      "has_image": true
+    },
+    {
+      "case_id": "TC03",
+      "case_name": "Intersection collision",
+      "claim_id": "CLM-54JuXSEP5Cj2",
+      "actual_outcome": "unknown",
+      "final_stage": "PARSE_ERROR",
+      "stages_completed": [],
+      "num_stages": 0,
+      "errors": [],
+      "run_ids": [],
+      "has_image": true
+    }
+  ]
+}
