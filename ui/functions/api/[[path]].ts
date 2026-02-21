@@ -7,7 +7,15 @@ export async function onRequest(context: { request: Request; env: Env; params: {
   const pathSegments = Array.isArray(params.path) ? params.path.join("/") : params.path;
   const upstreamBase = env.AWS_EDGE_BASE_URL || "http://127.0.0.1:8080";
   const url = new URL(request.url);
-  const upstreamUrl = `${upstreamBase}/edge/${pathSegments}${url.search}`;
+
+  // /api/admin/* → /admin/*, everything else → /edge/*
+  let upstreamPath: string;
+  if (pathSegments.startsWith("admin")) {
+    upstreamPath = `/${pathSegments}`;
+  } else {
+    upstreamPath = `/edge/${pathSegments}`;
+  }
+  const upstreamUrl = `${upstreamBase}${upstreamPath}${url.search}`;
 
   const init: RequestInit = {
     method: request.method,
