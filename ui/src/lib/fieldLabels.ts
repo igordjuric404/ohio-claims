@@ -49,6 +49,12 @@ export const FIELD_LABELS: Record<string, string> = {
   tax_reimbursement_eligible: "Tax Reimbursement Eligible",
   pricing_sources: "Pricing Sources",
 
+  // Image Analyzer output
+  image_descriptions: "Image Descriptions",
+  overall_assessment: "Overall Assessment",
+  estimated_labor_hours: "Estimated Labor Hours",
+  total_loss_indicators: "Total Loss Indicators",
+
   // Fraud Analyst output
   risk_score: "Risk Score",
   flags: "Risk Flags",

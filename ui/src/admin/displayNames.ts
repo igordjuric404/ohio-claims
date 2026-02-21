@@ -10,6 +10,7 @@ export const AGENT_NAMES: Record<string, string> = {
   seniorreviewer: "Senior Reviewer",
   finance: "Finance",
   assessor_vision: "Assessor (Vision)",
+  image_analyzer: "Image Analyzer",
 };
 
 export const STAGE_NAMES: Record<string, string> = {

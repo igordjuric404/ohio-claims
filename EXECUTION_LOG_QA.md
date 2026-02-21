@@ -155,6 +155,35 @@ Total: 30 passed
   - `ui/src/lib/fieldLabels.ts`
 - **Evidence**: All 34 E2E + 30 unit tests pass (64 total, 0 failures)
 
+### Phase: Assessor Web Search + Pricing Sources UI
+- **Goal**: Ensure assessor uses real web search for pricing; display clickable source links
+- **Status**: Done
+
+#### Changes
+- **Backend**: Two-phase assessor approach in `orchestrator.ts`:
+  1. Phase 1: `webSearchForPricing()` call using OpenRouter web plugin with `max_results: 10`
+  2. Phase 2: Standard assessor call receives pricing research + claim data
+  3. Citations from `message.annotations[].url_citation` merged into `pricing_sources`
+- **Client**: Added `UrlCitation` type, `citations` field to `AgentResponse`, `WebSearchPlugin` type, plugins support in `callOpenRouterDirect`
+- **System Prompt**: Strengthened to require actual URLs, not placeholders
+- **UI**: New `PricingSourcesPanel` component in `ReviewerClaimDetail.tsx`:
+  - Extracts URL + label from each pricing source string
+  - Renders clickable links with site favicons (Google S2 API), labels, external-link icons
+  - Responsive chip/tag layout with hover states
+  - Also added to admin `RunViewer.tsx`
+- **CSS**: 75+ lines in `App.css` for `.pricing-sources-*` classes
+- **E2E Tests**: 2 new tests verifying panel visibility, link attributes, favicons, labels
+
+#### Evidence
+- Created claim `CLM-MgHM2K1WywSM` on production — assessor returned real URLs from:
+  - `repairpal.com` — repair cost estimates
+  - `yourmechanic.com` — control arm/strut replacement costs
+  - `rockauto.com` — parts catalog
+  - `columbuscollision.com` — local Columbus body shop
+  - `autohausaz.com` — parts supplier
+- All 36 E2E tests pass (including 2 new pricing sources tests)
+- Commits: `284063c`, `cc8866a`
+
 ---
 
 ## Artifacts

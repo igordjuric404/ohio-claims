@@ -97,7 +97,7 @@ async function callOpenRouterDirect(
         start_index: a.url_citation.start_index,
         end_index: a.url_citation.end_index,
       }));
-    if (citations.length === 0) citations = undefined;
+    if (citations!.length === 0) citations = undefined;
   }
 
   return {
@@ -189,4 +189,60 @@ export async function webSearchForPricing(query: string): Promise<AgentResponse>
       search_prompt: "Web search results for auto parts pricing and labor rates. Use these results to provide accurate, sourced pricing data:",
     }],
   });
+}
+
+export type ImagePart = {
+  base64: string;
+  mimeType: string;
+  filename: string;
+};
+
+const VISION_MODEL = process.env.VISION_MODEL ?? "google/gemini-2.0-flash-001";
+
+export async function analyzeImagesWithVision(
+  systemPrompt: string,
+  textPrompt: string,
+  images: ImagePart[],
+): Promise<AgentResponse> {
+  const contentParts: any[] = [{ type: "text", text: textPrompt }];
+  for (const img of images) {
+    contentParts.push({
+      type: "image_url",
+      image_url: { url: `data:${img.mimeType};base64,${img.base64}` },
+    });
+  }
+
+  const body = {
+    model: VISION_MODEL,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: contentParts },
+    ],
+    max_tokens: 4000,
+    temperature: 0.1,
+  };
+
+  const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "authorization": `Bearer ${OPENROUTER_API_KEY}`,
+      "content-type": "application/json",
+      "x-title": "ohio-claims-image-analyzer",
+      "http-referer": "https://ohio-claims.pages.dev",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Vision model failed (${res.status}): ${errText}`);
+  }
+
+  const data = await res.json() as any;
+  const message = data.choices?.[0]?.message;
+  return {
+    text: message?.content ?? "",
+    model: data.model ?? VISION_MODEL,
+    usage: data.usage,
+  };
 }

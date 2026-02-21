@@ -8,12 +8,13 @@ type Props = {
   onBack: () => void;
 };
 
-const AGENT_ORDER = ["frontdesk", "claimsofficer", "assessor", "fraudanalyst"];
+const AGENT_ORDER = ["frontdesk", "claimsofficer", "image_analyzer", "assessor", "fraudanalyst"];
 
 const AGENT_DESCRIPTIONS: Record<string, string> = {
   frontdesk: "Performs initial triage, checks for missing documentation, and sets compliance deadlines.",
   claimsofficer: "Verifies coverage eligibility, checks policy terms, deductibles, and coverage limits.",
-  assessor: "Evaluates vehicle damage, estimates repair costs, and determines if total loss applies.",
+  image_analyzer: "Analyzes uploaded damage photos using AI vision to identify damaged components and severity.",
+  assessor: "Researches current parts prices and labor rates, then estimates repair costs.",
   fraudanalyst: "Analyzes claim for fraud indicators, assigns risk score, and recommends further action.",
 };
 
@@ -288,6 +289,77 @@ function DecisionPanel({ claimId, currentStage, onDecisionMade }: {
   );
 }
 
+type ImageDescription = {
+  image_index?: number;
+  filename?: string;
+  description: string;
+  damaged_parts?: string[];
+  severity?: string;
+};
+
+function DamagePhotosWithDescriptions({
+  photos,
+  imageDescriptions,
+  overallAssessment,
+}: {
+  photos: { key: string; filename: string; url: string }[];
+  imageDescriptions: ImageDescription[];
+  overallAssessment?: string;
+}) {
+  const descByFilename = new Map<string, ImageDescription>();
+  const descByIndex = new Map<number, ImageDescription>();
+  for (const desc of imageDescriptions) {
+    if (desc.filename) descByFilename.set(desc.filename, desc);
+    if (desc.image_index != null) descByIndex.set(desc.image_index, desc);
+  }
+
+  function getDescription(photo: { filename: string }, index: number): ImageDescription | undefined {
+    return descByFilename.get(photo.filename) ?? descByIndex.get(index);
+  }
+
+  return (
+    <div className="reviewer-photos card">
+      <h3>Damage Photos ({photos.length})</h3>
+      {overallAssessment && (
+        <p className="photo-overall-assessment">{overallAssessment}</p>
+      )}
+      <div className="damage-photos-described">
+        {photos.map((p, i) => {
+          const desc = getDescription(p, i);
+          return (
+            <div key={p.key} className="damage-photo-card">
+              <div className="damage-photo-image">
+                <img src={p.url} alt={p.filename} loading="lazy" />
+              </div>
+              {desc ? (
+                <div className="damage-photo-desc">
+                  <p className="damage-photo-desc-text">{desc.description}</p>
+                  {desc.damaged_parts && desc.damaged_parts.length > 0 && (
+                    <div className="damage-photo-parts">
+                      {desc.damaged_parts.map((part, j) => (
+                        <span key={j} className="damage-part-tag">{part}</span>
+                      ))}
+                    </div>
+                  )}
+                  {desc.severity && (
+                    <span className={`damage-severity-badge severity-${desc.severity}`}>
+                      {desc.severity}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="damage-photo-desc">
+                  <p className="damage-photo-desc-text muted">No AI description available</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function ReviewerClaimDetail({ claimId, onBack }: Props) {
   const [claim, setClaim] = useState<any>(null);
   const [agentOutputs, setAgentOutputs] = useState<Record<string, any>>({});
@@ -355,19 +427,31 @@ export function ReviewerClaimDetail({ claimId, onBack }: Props) {
         )}
       </div>
 
-      {/* Damage photos */}
-      {photos.length > 0 && (
-        <div className="reviewer-photos card">
-          <h3>Damage Photos ({photos.length})</h3>
-          <div className="damage-photos-grid">
-            {photos.map((p) => (
-              <div key={p.key} className="damage-photo-thumb">
-                <img src={p.url} alt={p.filename} loading="lazy" />
-              </div>
-            ))}
+      {/* Damage photos with AI descriptions */}
+      {photos.length > 0 && (() => {
+        const imageAnalyzerOutput = agentOutputs.image_analyzer?.output;
+        const imageDescriptions: ImageDescription[] = imageAnalyzerOutput?.image_descriptions ?? [];
+        const overallAssessment = imageAnalyzerOutput?.overall_assessment as string | undefined;
+
+        return imageDescriptions.length > 0 ? (
+          <DamagePhotosWithDescriptions
+            photos={photos}
+            imageDescriptions={imageDescriptions}
+            overallAssessment={overallAssessment}
+          />
+        ) : (
+          <div className="reviewer-photos card">
+            <h3>Damage Photos ({photos.length})</h3>
+            <div className="damage-photos-grid">
+              {photos.map((p) => (
+                <div key={p.key} className="damage-photo-thumb">
+                  <img src={p.url} alt={p.filename} loading="lazy" />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Agent sections */}
       <div className="reviewer-agent-sections">

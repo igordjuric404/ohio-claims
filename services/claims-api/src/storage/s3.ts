@@ -49,3 +49,16 @@ export async function createPresignedGetUrl(key: string, expiresIn = 600): Promi
   const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
   return getSignedUrl(s3, command, { expiresIn });
 }
+
+export async function getObjectAsBase64(key: string): Promise<{ base64: string; mimeType: string } | null> {
+  try {
+    const res = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
+    const buf = await res.Body?.transformToByteArray();
+    if (!buf) return null;
+    const ext = key.split(".").pop()?.toLowerCase() ?? "jpeg";
+    const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+    return { base64: Buffer.from(buf).toString("base64"), mimeType };
+  } catch {
+    return null;
+  }
+}

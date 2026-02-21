@@ -31,6 +31,41 @@ const STAGE_DATA = [
     reasoning: "Reviewed policy POL-OH-2024-83921 against the reported loss. The policy includes comprehensive collision coverage with a $500 deductible. The incident (rear-end collision at an intersection) falls within standard covered events. No exclusionary clauses apply — the driver was not at fault, and the vehicle was being operated within policy terms.",
   },
   {
+    agent_id: "image_analyzer",
+    stage: "ASSESSMENT_DONE",
+    output: {
+      image_descriptions: [
+        {
+          image_index: 0,
+          filename: "front-damage.jpg",
+          description: "Front-right quarter panel shows significant deformation from the collision impact. The bumper cover is cracked and partially separated from the mounting points. Clear scrape marks and paint transfer visible.",
+          damaged_parts: ["front bumper cover", "quarter panel"],
+          severity: "moderate",
+        },
+        {
+          image_index: 1,
+          filename: "headlight-damage.jpg",
+          description: "Right headlight assembly is shattered with the lens completely broken. The housing is displaced from its mounting bracket, likely requiring full replacement.",
+          damaged_parts: ["headlight assembly"],
+          severity: "severe",
+        },
+        {
+          image_index: 2,
+          filename: "fender-damage.jpg",
+          description: "Right front fender has a deep dent approximately 8 inches in diameter with associated paint cracking. The fender is pushed inward affecting the wheel well clearance.",
+          damaged_parts: ["fender"],
+          severity: "moderate",
+        },
+      ],
+      damaged_components: ["front bumper cover", "headlight assembly", "fender", "quarter panel"],
+      overall_assessment: "The vehicle shows moderate to severe front-right collision damage. The primary impact zone is the front-right quarter panel area, with damage extending to the bumper, headlight, and fender. No structural damage visible but the headlight assembly requires full replacement.",
+      estimated_labor_hours: { low: 8, high: 12, breakdown: "Bumper R&R (2-3 hrs), headlight R&R (1-2 hrs), fender R&R (2-3 hrs), paint/blend (3-4 hrs)" },
+      total_loss_indicators: null,
+      confidence: 0.88,
+    },
+    reasoning: null,
+  },
+  {
     agent_id: "assessor",
     stage: "ASSESSMENT_DONE",
     output: {
@@ -45,9 +80,9 @@ const STAGE_DATA = [
       parts_compliance_note: "Estimate uses like kind and quality parts per ORC 1345.81. OEM and aftermarket options provided.",
       tax_reimbursement_eligible: false,
       pricing_sources: [
-        "https://www.carparts.com/bumper-cover/honda/accord",
-        "https://www.rockauto.com/en/catalog/honda/2023/accord",
-        "https://www.aaa.com/autorepair/articles/average-labor-rates"
+        "https://www.carparts.com/bumper-cover/honda/accord — Honda Accord Bumper Cover",
+        "https://www.rockauto.com/en/catalog/honda/2023/accord — RockAuto Parts Catalog",
+        "https://www.aaa.com/autorepair/articles/average-labor-rates — AAA Auto Repair Labor Rates"
       ],
       compliance: { deadlines_met: true, estimate_provided: true, next_required_action: "Schedule vehicle inspection at Buckeye Auto Body." },
       confidence: 0.85,

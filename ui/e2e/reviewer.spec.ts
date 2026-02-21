@@ -69,7 +69,7 @@ test.describe("Reviewer Dashboard & Claim Detail (R5, R6)", () => {
     await expect(summary).toContainText("Broad Street");
   });
 
-  test("R6: claim detail has 4 agent sections (frontdesk, claimsofficer, assessor, fraudanalyst)", async ({
+  test("R6: claim detail has 5 agent sections (frontdesk, claimsofficer, image_analyzer, assessor, fraudanalyst)", async ({
     page,
   }) => {
     await loginAsReviewer(page);
@@ -77,13 +77,14 @@ test.describe("Reviewer Dashboard & Claim Detail (R5, R6)", () => {
     await page.waitForLoadState("networkidle");
 
     const agentSections = page.locator(".reviewer-agent-section");
-    await expect(agentSections).toHaveCount(4);
+    await expect(agentSections).toHaveCount(5);
 
     const sectionHeaders = page.locator(".agent-section-header h3");
     const headers = await sectionHeaders.allTextContents();
 
     expect(headers).toContain("Front Desk");
     expect(headers).toContain("Claims Officer");
+    expect(headers).toContain("Image Analyzer");
     expect(headers).toContain("Assessor");
     expect(headers).toContain("Fraud Analyst");
   });
@@ -180,6 +181,21 @@ test.describe("Reviewer Dashboard & Claim Detail (R5, R6)", () => {
       await expect(link.getAttribute("target")).resolves.toBe("_blank");
       await expect(link.getAttribute("rel")).resolves.toContain("noopener");
     }
+  });
+
+  test("R6: image analyzer section shows damaged components and overall assessment", async ({
+    page,
+  }) => {
+    await loginAsReviewer(page);
+    await page.locator(`text=${claimId}`).first().click();
+    await page.waitForLoadState("networkidle");
+
+    const imageAnalyzerSection = page.locator(".reviewer-agent-section").filter({ hasText: "Image Analyzer" });
+    await expect(imageAnalyzerSection).toBeVisible();
+
+    await expect(imageAnalyzerSection).toContainText("front bumper cover");
+    await expect(imageAnalyzerSection).toContainText("headlight assembly");
+    await expect(imageAnalyzerSection).toContainText("fender");
   });
 
   test("R6: pricing source links show favicons and labels", async ({

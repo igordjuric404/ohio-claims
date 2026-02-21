@@ -1,8 +1,9 @@
 import { ulid } from "ulid";
 import { randomBytes } from "node:crypto";
-import { runAgent, loadSystemPrompt, webSearchForPricing, type AgentCallOptions } from "./client.js";
+import { runAgent, loadSystemPrompt, webSearchForPricing, analyzeImagesWithVision, type AgentCallOptions, type ImagePart } from "./client.js";
 import { stageValidators } from "@ohio-claims/shared";
 import * as db from "../storage/index.js";
+import { listByPrefix, getObjectAsBase64 } from "../storage/s3.js";
 import { computeEventHash, createEventSK } from "../lib/audit.js";
 import { decrypt } from "../crypto/encrypt.js";
 import type { ClaimStage } from "@ohio-claims/shared";
@@ -112,7 +113,8 @@ async function runStage(
   validatorKey: string,
   claim: Record<string, unknown>,
   actorId: string,
-  pipelineTraceId: string
+  pipelineTraceId: string,
+  imageAnalysis?: Record<string, unknown>,
 ): Promise<{ ok: boolean; output?: unknown; error?: string; runId: string }> {
   const runId = ulid();
   const traceId = pipelineTraceId;
@@ -132,9 +134,12 @@ async function runStage(
     const model = vehicle?.model ?? "";
     const city = loss?.city ?? "";
     const state = loss?.state ?? "OH";
-    const description = (loss?.description as string) ?? "";
 
-    const searchQuery = `Find current 2024-2026 auto parts prices and body shop labor rates:\n\nVehicle: ${year} ${make} ${model}\nLocation: ${city}, ${state}\nDamage description: ${description}\n\nSearch for:\n1. Price of each damaged part (OEM and aftermarket) for this vehicle\n2. Auto body shop labor rate per hour in ${city}, ${state}\n3. If extensive damage, the vehicle's current market value\n\nFor each result, provide the price, the part name, and the URL where you found it.`;
+    const damagedComponents = Array.isArray(imageAnalysis?.damaged_components)
+      ? (imageAnalysis!.damaged_components as string[]).join(", ")
+      : (loss?.description as string) ?? "";
+
+    const searchQuery = `Find current 2024-2026 auto parts prices and body shop labor rates:\n\nVehicle: ${year} ${make} ${model}\nLocation: ${city}, ${state}\nDamaged components identified by image analysis: ${damagedComponents}\n\nSearch for:\n1. Price of each damaged part (OEM and aftermarket) for this specific vehicle\n2. Auto body shop labor rate per hour in ${city}, ${state}\n3. If extensive damage, the vehicle's current market value\n\nFor each result, provide the price, the part name, and the URL where you found it.`;
 
     try {
       const searchResponse = await webSearchForPricing(searchQuery);
@@ -146,10 +151,14 @@ async function runStage(
   }
 
   let prompt: string;
+  const imageAnalysisSummary = imageAnalysis
+    ? `\n\n--- IMAGE ANALYSIS RESULTS ---\n${JSON.stringify(imageAnalysis, null, 2)}\n--- END IMAGE ANALYSIS ---\n`
+    : "";
+
   if (pricingResearch) {
-    prompt = `Here is real-time web research data with current auto parts prices and labor rates:\n\n--- WEB RESEARCH RESULTS ---\n${pricingResearch}\n--- END WEB RESEARCH ---\n\nNow analyze the claim below using the REAL prices from the web research above. Put the actual URLs from the research into pricing_sources.\n\nClaim data:\n${claimSummary}`;
+    prompt = `Here is real-time web research data with current auto parts prices and labor rates:\n\n--- WEB RESEARCH RESULTS ---\n${pricingResearch}\n--- END WEB RESEARCH ---${imageAnalysisSummary}\nNow analyze the claim below using the REAL prices from the web research above. Put the actual URLs from the research into pricing_sources.\n\nClaim data:\n${claimSummary}`;
   } else {
-    prompt = `Analyze this claim and produce your structured JSON output.\n\nClaim data:\n${claimSummary}`;
+    prompt = `Analyze this claim and produce your structured JSON output.${imageAnalysisSummary}\n\nClaim data:\n${claimSummary}`;
   }
   const systemPrompt = loadSystemPrompt(agentId);
 
@@ -303,6 +312,150 @@ async function runStage(
   return { ok: true, output: parsed, runId };
 }
 
+type ImageAnalysisResult = {
+  ok: boolean;
+  output?: Record<string, unknown>;
+  error?: string;
+  runId: string;
+};
+
+async function runImageAnalysis(
+  claimId: string,
+  claim: Record<string, unknown>,
+  actorId: string,
+  pipelineTraceId: string
+): Promise<ImageAnalysisResult> {
+  const runId = ulid();
+  const started = new Date();
+  const vehicle = claim.vehicle as Record<string, unknown> | undefined;
+  const vehicleStr = `${vehicle?.year ?? "?"} ${vehicle?.make ?? "?"} ${vehicle?.model ?? "?"}`;
+
+  const run: Record<string, unknown> = {
+    run_id: runId,
+    claim_id: claimId,
+    stage: "ASSESSMENT_DONE",
+    agent_id: "image_analyzer",
+    status: "RUNNING",
+    started_at: started.toISOString(),
+    actor_id: actorId,
+    trace_id: pipelineTraceId,
+    input_prompt: `Image analysis for ${vehicleStr}`,
+  };
+  await db.putRun(run);
+
+  let seqCounter = 1;
+  const emitRunEvent = async (eventType: string, payload: unknown) => {
+    await db.putRunEvent({
+      run_id: runId,
+      seq: seqCounter++,
+      ts: new Date().toISOString(),
+      event_type: eventType,
+      payload,
+    });
+  };
+
+  try {
+    let photoKeys: string[] = [];
+    try {
+      photoKeys = await listByPrefix(`claims/${claimId}/damage_photos/`);
+    } catch {
+      photoKeys = [];
+    }
+
+    if (photoKeys.length === 0) {
+      const noPhotosOutput = {
+        image_descriptions: [],
+        damaged_components: [],
+        overall_assessment: "No damage photos available. Assessment based on text description only.",
+        estimated_labor_hours: null,
+        total_loss_indicators: null,
+        confidence: 0,
+      };
+      const ended = new Date();
+      await db.updateRunStatus(runId, "SUCCEEDED", {
+        ended_at: ended.toISOString(),
+        duration_ms: ended.getTime() - started.getTime(),
+        output_json: noPhotosOutput,
+      });
+      return { ok: true, output: noPhotosOutput, runId };
+    }
+
+    const images: ImagePart[] = [];
+    for (const key of photoKeys.slice(0, 8)) {
+      const result = await getObjectAsBase64(key);
+      if (result) {
+        images.push({
+          base64: result.base64,
+          mimeType: result.mimeType,
+          filename: key.split("/").pop() ?? key,
+        });
+      }
+    }
+
+    if (images.length === 0) {
+      throw new Error("Could not read any damage photos from storage.");
+    }
+
+    await emitRunEvent("stage.started", { agent_id: "image_analyzer", photos: images.length });
+
+    const systemPrompt = loadSystemPrompt("image_analyzer");
+    const textPrompt = `Analyze ${images.length} damage photo(s) for a ${vehicleStr}. Photos are labeled by index (0-based). Describe the damage visible in each photo and identify all damaged components.`;
+
+    const response = await analyzeImagesWithVision(systemPrompt, textPrompt, images);
+
+    await emitRunEvent("agent.response", { model: response.model, usage: response.usage });
+
+    let parsed: Record<string, unknown>;
+    try {
+      let cleaned = response.text.trim();
+      if (cleaned.startsWith("```")) {
+        cleaned = cleaned.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+      }
+      parsed = JSON.parse(cleaned) as Record<string, unknown>;
+    } catch {
+      throw new Error(`Image analyzer returned invalid JSON: ${response.text.substring(0, 200)}`);
+    }
+
+    if (Array.isArray(parsed.image_descriptions)) {
+      for (const desc of parsed.image_descriptions as any[]) {
+        const idx = desc.image_index ?? 0;
+        if (idx < images.length) {
+          desc.filename = images[idx].filename;
+        }
+      }
+    }
+
+    const ended = new Date();
+    await emitRunEvent("stage.completed", parsed);
+    await db.updateRunStatus(runId, "SUCCEEDED", {
+      ended_at: ended.toISOString(),
+      duration_ms: ended.getTime() - started.getTime(),
+      model: response.model,
+      usage: response.usage,
+      output_json: parsed,
+    });
+
+    return { ok: true, output: parsed, runId };
+  } catch (err: any) {
+    const ended = new Date();
+    await emitRunEvent("stage.failed", { error: err.message });
+    await db.updateRunStatus(runId, "FAILED", {
+      ended_at: ended.toISOString(),
+      duration_ms: ended.getTime() - started.getTime(),
+      error: err.message,
+    });
+    const fallback = {
+      image_descriptions: [],
+      damaged_components: [],
+      overall_assessment: `Image analysis failed: ${err.message}. Assessment based on text description only.`,
+      estimated_labor_hours: null,
+      total_loss_indicators: null,
+      confidence: 0,
+    };
+    return { ok: true, output: fallback, runId };
+  }
+}
+
 export async function runPipeline(claimId: string, actorId = "system"): Promise<PipelineResult> {
   const pipelineTraceId = generateTraceId();
 
@@ -321,12 +474,24 @@ export async function runPipeline(claimId: string, actorId = "system"): Promise<
     return result;
   }
 
+  let imageAnalysisOutput: Record<string, unknown> | undefined;
+
   for (const step of PIPELINE_STAGES) {
     if (claim!.stage !== step.fromStage) continue;
 
+    if (step.agentId === "assessor") {
+      const imageResult = await runImageAnalysis(claimId, claim!, actorId, pipelineTraceId);
+      result.run_ids.push(imageResult.runId);
+      if (imageResult.output) {
+        imageAnalysisOutput = imageResult.output;
+        result.stage_outputs["IMAGE_ANALYSIS"] = imageResult.output;
+      }
+    }
+
     const stageResult = await runStage(
       claimId, step.agentId, step.toStage, step.validatorKey,
-      claim!, actorId, pipelineTraceId
+      claim!, actorId, pipelineTraceId,
+      imageAnalysisOutput,
     );
     result.run_ids.push(stageResult.runId);
 
@@ -340,7 +505,6 @@ export async function runPipeline(claimId: string, actorId = "system"): Promise<
     claim = await db.getClaim(claimId);
   }
 
-  // After all agent stages complete, transition to PENDING_REVIEW for human decision
   claim = await db.getClaim(claimId);
   if (claim!.stage === "FRAUD_DONE") {
     const eventCtx = { actor_id: actorId, trace_id: pipelineTraceId };
