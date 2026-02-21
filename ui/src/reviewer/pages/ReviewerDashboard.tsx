@@ -46,7 +46,7 @@ export function ReviewerDashboard({ onSelectClaim }: Props) {
     try {
       const res = await fetch("/internal/test/seed-reviewed-claim", { method: "POST" });
       if (!res.ok) throw new Error("Seed failed");
-      const data = await res.json();
+      await res.json();
       loadClaims();
       setDebugInfo(null);
     } catch (e: any) {
