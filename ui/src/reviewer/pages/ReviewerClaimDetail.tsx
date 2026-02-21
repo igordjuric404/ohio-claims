@@ -361,6 +361,8 @@ function AgentSection({ agentId, data, judge }: { agentId: string; data: { input
   );
 }
 
+const TERMINAL_STAGES = new Set(["PENDING_REVIEW", "FINAL_DECISION_DONE", "PAID", "CLOSED_NO_PAY"]);
+
 function DecisionPanel({ claimId, currentStage, onDecisionMade, assessorRange }: {
   claimId: string;
   currentStage: string;
@@ -374,12 +376,33 @@ function DecisionPanel({ claimId, currentStage, onDecisionMade, assessorRange }:
   const [error, setError] = useState("");
   const [result, setResult] = useState<any>(null);
 
-  if (currentStage !== "PENDING_REVIEW") {
+  const pipelineRunning = !TERMINAL_STAGES.has(currentStage as any);
+
+  if (currentStage === "PAID" || currentStage === "CLOSED_NO_PAY" || currentStage === "FINAL_DECISION_DONE") {
     return (
       <div className="decision-panel decision-panel-decided">
         <h3>Decision</h3>
         <div className={`decision-badge ${currentStage === "PAID" ? "decision-approved" : "decision-denied"}`}>
           {stageName(currentStage)}
+        </div>
+      </div>
+    );
+  }
+
+  if (pipelineRunning) {
+    return (
+      <div className="decision-panel">
+        <h3>Current Stage</h3>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <span className="spinner" style={{ display: "inline-block", width: 18, height: 18, border: "2.5px solid #3b82f6", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite", flexShrink: 0 }} />
+          <div>
+            <div className={`status-badge stage-${currentStage.toLowerCase().replace(/_/g, "-")}`} style={{ display: "inline-block" }}>
+              {stageName(currentStage)}
+            </div>
+            <p className="muted" style={{ marginTop: "0.35rem", fontSize: "0.85rem" }}>
+              AI pipeline is processing — this will update automatically.
+            </p>
+          </div>
         </div>
       </div>
     );
