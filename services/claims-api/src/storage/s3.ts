@@ -25,3 +25,15 @@ export async function listAttachments(claimId: string): Promise<string[]> {
   );
   return (res.Contents ?? []).map((o) => o.Key!);
 }
+
+export async function createPresignedUploadUrlForKey(
+  key: string,
+  contentType: string = "application/octet-stream"
+): Promise<string> {
+  const command = new PutObjectCommand({
+    Bucket: BUCKET,
+    Key: key,
+    ContentType: contentType,
+  });
+  return getSignedUrl(s3, command, { expiresIn: 900 });
+}

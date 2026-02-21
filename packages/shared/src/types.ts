@@ -222,3 +222,30 @@ export type AttachmentMeta = {
   uploaded_at: IsoDateTime;
   uploaded_by?: string;
 };
+
+// --- Phase 3: Autonomous Intake ---
+
+export type IntakeJobStatus = "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+
+export type IntakeJob = {
+  intake_job_id: string;
+  status: IntakeJobStatus;
+  created_at: IsoDateTime;
+  updated_at: IsoDateTime;
+  actor_id: string;
+  files: IntakeFile[];
+  extracted_fields?: Record<string, unknown>;
+  field_confidence?: Record<string, number>;
+  provenance?: Record<string, { file_key: string; method: string; excerpt?: string }>;
+  claim_id?: string;
+  run_id?: string;
+  error?: string;
+};
+
+export type IntakeFile = {
+  key: string;
+  filename: string;
+  content_type: string;
+  bytes?: number;
+  doc_type?: string;
+};

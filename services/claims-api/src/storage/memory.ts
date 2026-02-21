@@ -106,3 +106,24 @@ export async function scanRuns(limit = 50, _startKey?: Record<string, unknown>) 
   const items = [...runs.values()].slice(0, limit);
   return { items, lastKey: undefined };
 }
+
+// --- IntakeJobs ---
+
+const intakeJobs = new Map<string, Record<string, unknown>>();
+
+export async function putIntakeJob(job: Record<string, unknown>) {
+  intakeJobs.set(job.intake_job_id as string, { ...job });
+}
+
+export async function getIntakeJob(jobId: string) {
+  return intakeJobs.get(jobId) ?? null;
+}
+
+export async function updateIntakeJob(jobId: string, updates: Record<string, unknown>) {
+  const job = intakeJobs.get(jobId);
+  if (job) Object.assign(job, updates, { updated_at: new Date().toISOString() });
+}
+
+export async function scanIntakeJobs(limit = 50) {
+  return [...intakeJobs.values()].slice(0, limit);
+}

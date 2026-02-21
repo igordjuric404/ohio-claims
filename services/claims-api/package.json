@@ -17,6 +17,7 @@
     "@ohio-claims/shared": "workspace:*",
     "fastify": "^5.0.0",
     "nanoid": "^5.0.0",
+    "pdf-parse": "^2.4.5",
     "ulid": "^3.0.2"
   },
   "devDependencies": {

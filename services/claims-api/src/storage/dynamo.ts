@@ -22,6 +22,7 @@ const EVENTS_TABLE = process.env.DDB_EVENTS_TABLE ?? "ohio-claims-dev-ClaimEvent
 const RUNS_TABLE = process.env.DDB_RUNS_TABLE ?? "ohio-claims-dev-Runs";
 const RUN_EVENTS_TABLE = process.env.DDB_RUN_EVENTS_TABLE ?? "ohio-claims-dev-RunEvents";
 const AGENTS_TABLE = process.env.DDB_AGENTS_TABLE ?? "ohio-claims-dev-Agents";
+const INTAKE_JOBS_TABLE = process.env.DDB_INTAKE_JOBS_TABLE ?? "ohio-claims-dev-IntakeJobs";
 
 export async function putClaim(claim: Record<string, unknown>) {
   await ddb.send(new PutCommand({ TableName: CLAIMS_TABLE, Item: claim }));
@@ -190,4 +191,50 @@ export async function scanRuns(limit = 50, startKey?: Record<string, unknown>) {
     })
   );
   return { items: res.Items ?? [], lastKey: res.LastEvaluatedKey };
+}
+
+// --- IntakeJobs ---
+
+export async function putIntakeJob(job: Record<string, unknown>) {
+  await ddb.send(new PutCommand({ TableName: INTAKE_JOBS_TABLE, Item: job }));
+}
+
+export async function getIntakeJob(jobId: string) {
+  const res = await ddb.send(
+    new GetCommand({ TableName: INTAKE_JOBS_TABLE, Key: { intake_job_id: jobId } })
+  );
+  return res.Item ?? null;
+}
+
+export async function updateIntakeJob(jobId: string, updates: Record<string, unknown>) {
+  let expr = "SET";
+  const names: Record<string, string> = {};
+  const vals: Record<string, unknown> = {};
+  let idx = 0;
+  for (const [k, v] of Object.entries(updates)) {
+    if (idx > 0) expr += ",";
+    const alias = `#ij${idx}`;
+    const valAlias = `:ij${idx}`;
+    expr += ` ${alias} = ${valAlias}`;
+    names[alias] = k;
+    vals[valAlias] = v;
+    idx++;
+  }
+  if (idx === 0) return;
+  await ddb.send(
+    new UpdateCommand({
+      TableName: INTAKE_JOBS_TABLE,
+      Key: { intake_job_id: jobId },
+      UpdateExpression: expr,
+      ExpressionAttributeNames: names,
+      ExpressionAttributeValues: vals,
+    })
+  );
+}
+
+export async function scanIntakeJobs(limit = 50) {
+  const res = await ddb.send(
+    new ScanCommand({ TableName: INTAKE_JOBS_TABLE, Limit: limit })
+  );
+  return res.Items ?? [];
 }

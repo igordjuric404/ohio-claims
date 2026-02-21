@@ -489,3 +489,29 @@
   margin-top: 0.25rem;
   line-height: 1.4;
 }
+
+/* Public Tabs */
+.public-tabs {
+  display: flex;
+  gap: 0;
+  max-width: 720px;
+  margin: 2rem auto 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-dim);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tab-btn:hover { color: var(--color-text); }
+.tab-btn.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}

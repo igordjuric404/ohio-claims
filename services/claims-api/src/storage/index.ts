@@ -28,3 +28,9 @@ export const getAllAgents = useMemory ? memory.getAllAgents : dynamo.getAllAgent
 // Admin scans
 export const scanClaims = useMemory ? memory.scanClaims : dynamo.scanClaims;
 export const scanRuns = useMemory ? memory.scanRuns : dynamo.scanRuns;
+
+// IntakeJobs
+export const putIntakeJob = useMemory ? memory.putIntakeJob : dynamo.putIntakeJob;
+export const getIntakeJob = useMemory ? memory.getIntakeJob : dynamo.getIntakeJob;
+export const updateIntakeJob = useMemory ? memory.updateIntakeJob : dynamo.updateIntakeJob;
+export const scanIntakeJobs = useMemory ? memory.scanIntakeJobs : dynamo.scanIntakeJobs;

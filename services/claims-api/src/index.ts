@@ -10,6 +10,7 @@ import { adminRunsRoutes } from "./routes/admin/runs.js";
 import { adminAuditRoutes } from "./routes/admin/audit.js";
 import { adminUsageRoutes } from "./routes/admin/usage.js";
 import { adminAgentsRoutes } from "./routes/admin/agents.js";
+import { intakeRoutes } from "./routes/intake.js";
 import { setAdminPassword } from "./middleware/adminAuth.js";
 
 const masterKey = process.env.APP_MASTER_KEY_B64;
@@ -46,6 +47,7 @@ await app.register(adminRunsRoutes);
 await app.register(adminAuditRoutes);
 await app.register(adminUsageRoutes);
 await app.register(adminAgentsRoutes);
+await app.register(intakeRoutes);
 
 const port = Number(process.env.PORT ?? "8080");
 const host = process.env.HOST ?? "0.0.0.0";
