@@ -90,10 +90,11 @@ async function fetchApi(
   url: string,
   opts?: RequestInit
 ): Promise<Response> {
-  const res = await fetch(`${BASE}${url}`, {
-    headers: { 'Content-Type': 'application/json', ...opts?.headers },
-    ...opts,
-  });
+  const headers: Record<string, string> = { ...opts?.headers as Record<string, string> };
+  if (opts?.body) {
+    headers['Content-Type'] = headers['Content-Type'] ?? 'application/json';
+  }
+  const res = await fetch(`${BASE}${url}`, { ...opts, headers });
   return res;
 }
 

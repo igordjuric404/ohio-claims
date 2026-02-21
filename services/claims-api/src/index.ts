@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import { initEncryption } from "./crypto/encrypt.js";
 import { claimsRoutes } from "./routes/claims.js";
+import { runsRoutes } from "./routes/runs.js";
 
 const masterKey = process.env.APP_MASTER_KEY_B64;
 if (masterKey) {
@@ -17,6 +18,7 @@ app.get("/healthz", async () => ({ ok: true }));
 app.get("/edge/ping", async () => ({ pong: true }));
 
 await app.register(claimsRoutes);
+await app.register(runsRoutes);
 
 const port = Number(process.env.PORT ?? "8080");
 const host = process.env.HOST ?? "0.0.0.0";

@@ -1,15 +1,7 @@
 import { createHash } from "node:crypto";
 import { nanoid } from "nanoid";
 
-export function computeEventHash(event: {
-  claim_id: string;
-  event_sk: string;
-  created_at: string;
-  stage: string;
-  type: string;
-  data: unknown;
-  prev_hash?: string;
-}): string {
+export function computeEventHash(event: Record<string, unknown>): string {
   const payload = JSON.stringify({
     claim_id: event.claim_id,
     event_sk: event.event_sk,

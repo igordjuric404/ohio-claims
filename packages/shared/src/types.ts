@@ -159,3 +159,66 @@ export type FinanceOutput = {
   };
   confidence: number;
 };
+
+// --- Phase 0 Add-ons ---
+
+export type RunStatus = "RUNNING" | "SUCCEEDED" | "FAILED";
+
+export type Run = {
+  run_id: string;
+  claim_id: string;
+  stage: string;
+  agent_id: string;
+  status: RunStatus;
+  started_at: IsoDateTime;
+  ended_at?: IsoDateTime;
+  duration_ms?: number;
+  actor_id: string;
+  trace_id: string;
+  model?: string;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+  output_s3_key?: string;
+  error?: string;
+};
+
+export type RunEvent = {
+  run_id: string;
+  seq: number;
+  ts: IsoDateTime;
+  event_type: string;
+  payload: unknown;
+};
+
+export type AgentConfig = {
+  agent_id: string;
+  display_name: string;
+  enabled: boolean;
+  model_primary: string;
+  model_fallbacks?: string[];
+  tool_allowlist: string[];
+  prompt_version?: string;
+  updated_at: IsoDateTime;
+};
+
+export type AttachmentType =
+  | "intake_pdf"
+  | "intake_eml"
+  | "intake_image"
+  | "damage_photo"
+  | "police_report"
+  | "repair_estimate"
+  | "other";
+
+export type AttachmentMeta = {
+  key: string;
+  attachment_type: AttachmentType;
+  content_type: string;
+  bytes?: number;
+  sha256?: string;
+  uploaded_at: IsoDateTime;
+  uploaded_by?: string;
+};

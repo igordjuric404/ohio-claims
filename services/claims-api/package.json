@@ -15,7 +15,8 @@
     "@aws-sdk/s3-request-presigner": "^3.700.0",
     "@ohio-claims/shared": "workspace:*",
     "fastify": "^5.0.0",
-    "nanoid": "^5.0.0"
+    "nanoid": "^5.0.0",
+    "ulid": "^3.0.2"
   },
   "devDependencies": {
     "tsx": "^4.0.0",
