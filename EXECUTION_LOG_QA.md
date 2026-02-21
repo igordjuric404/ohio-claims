@@ -191,6 +191,60 @@ Total: 30 passed
 - Traces: `ui/test-results/` (captured on failure)
 - HTML report: `ui/test-results/html/` (run `npx playwright show-report test-results/html`)
 
+---
+
+## Phase: Image Analyzer + Split Assessor Pipeline
+**Status**: Done
+**Date**: 2026-02-21
+
+### What was implemented
+
+1. **Image Analyzer Agent (backend)**
+   - New `analyzeImagesWithVision()` function in `client.ts` sends photos to Gemini 2.0 Flash Vision
+   - New `getObjectAsBase64()` in `s3.ts` fetches photo binaries from S3
+   - System prompt at `openclaw/agents/image_analyzer/SYSTEM_PROMPT.md`
+   - Returns per-image descriptions, damaged components list, severity, labor estimates
+
+2. **Split Assessor Pipeline (orchestrator)**
+   - Pipeline now runs image analysis BEFORE the assessor/researcher
+   - `runImageAnalysis()` fetches photos from S3, sends to Gemini Vision
+   - Assessor receives image analysis results + web research results in its prompt
+   - Web search uses identified damaged components for targeted pricing queries
+   - Graceful fallback when no photos are available
+
+3. **Reviewer UI — Image Descriptions**
+   - New `DamagePhotosWithDescriptions` component in `ReviewerClaimDetail.tsx`
+   - Photos displayed as cards with AI description, damaged part tags, and severity badge
+   - Image Analyzer appears as a dedicated agent section in the reviewer detail
+   - CSS: `.damage-photo-card`, `.damage-part-tag`, `.severity-*` badges
+   - Responsive layout (stacks vertically on mobile)
+
+4. **Test Seed Data & E2E Tests**
+   - Updated `testSeed.ts` with `image_analyzer` run (3 image descriptions)
+   - Updated agent count test (4 → 5 agent sections)
+   - New test: image analyzer section shows damaged components
+   - All 37 E2E tests passing
+
+### Files Modified
+- `services/claims-api/src/openclaw/client.ts` — `analyzeImagesWithVision()`, `ImagePart` type
+- `services/claims-api/src/openclaw/orchestrator.ts` — `runImageAnalysis()`, split pipeline
+- `services/claims-api/src/storage/s3.ts` — `getObjectAsBase64()`
+- `services/claims-api/src/routes/testSeed.ts` — image_analyzer seed data
+- `openclaw/agents/image_analyzer/SYSTEM_PROMPT.md` — new agent prompt
+- `ui/src/reviewer/pages/ReviewerClaimDetail.tsx` — `DamagePhotosWithDescriptions`
+- `ui/src/App.css` — damage photo card styles
+- `ui/src/admin/displayNames.ts` — added "Image Analyzer" display name
+- `ui/src/lib/fieldLabels.ts` — image analyzer field labels
+- `ui/e2e/reviewer.spec.ts` — updated & new E2E tests
+
+### Evidence
+- Production claim `CLM-qrIHiEc8KeEL`: image_analyzer run SUCCEEDED, assessor has 11 pricing source URLs
+- All 37 E2E tests pass locally
+- Deployed to EC2 + Cloudflare Pages
+- Commit: `352c06f` pushed to main
+
+---
+
 ## How to Run
 ```bash
 # Start backend (in-memory)
