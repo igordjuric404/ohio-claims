@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getClaim, runPipeline, type Claim, type ClaimEvent, type PipelineResult } from '../api';
 import { Timeline } from './Timeline';
+import { DamagePhotoUploader } from '../claims/components/DamagePhotoUploader';
 
 type ClaimViewProps = {
   claimId: string;
@@ -204,6 +205,10 @@ export function ClaimView({ claimId, onBack }: ClaimViewProps) {
               )}
             </div>
           )}
+        </section>
+
+        <section className="card claim-damage">
+          <DamagePhotoUploader claimId={claim.claim_id} />
         </section>
 
         <section className="card claim-timeline">

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const s3 = new S3Client({});
@@ -26,6 +26,13 @@ export async function listAttachments(claimId: string): Promise<string[]> {
   return (res.Contents ?? []).map((o) => o.Key!);
 }
 
+export async function listByPrefix(prefix: string): Promise<string[]> {
+  const res = await s3.send(
+    new ListObjectsV2Command({ Bucket: BUCKET, Prefix: prefix })
+  );
+  return (res.Contents ?? []).map((o) => o.Key!);
+}
+
 export async function createPresignedUploadUrlForKey(
   key: string,
   contentType: string = "application/octet-stream"
@@ -36,4 +43,9 @@ export async function createPresignedUploadUrlForKey(
     ContentType: contentType,
   });
   return getSignedUrl(s3, command, { expiresIn: 900 });
+}
+
+export async function createPresignedGetUrl(key: string, expiresIn = 600): Promise<string> {
+  const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+  return getSignedUrl(s3, command, { expiresIn });
 }
