@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ohio-claims-ui",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-02-17",
+  "vars": {
+    "AWS_EDGE_BASE_URL": "http://127.0.0.1:8080"
+  }
+}
