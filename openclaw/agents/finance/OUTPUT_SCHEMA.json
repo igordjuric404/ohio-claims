@@ -6,16 +6,16 @@
   "required": ["payment_status", "compliance", "confidence"],
   "properties": {
     "payment_status": { "type": "string", "enum": ["disbursed", "held", "rejected"] },
-    "amount": { "type": "number", "minimum": 0 },
-    "payee": { "type": "string" },
-    "ledger_entry_id": { "type": "string" },
-    "receipt_ref": { "type": "string" },
+    "amount": { "type": ["number", "null"], "minimum": 0 },
+    "payee": { "type": ["string", "null"] },
+    "ledger_entry_id": { "type": ["string", "null"] },
+    "receipt_ref": { "type": ["string", "null"] },
     "compliance": {
       "type": "object",
       "additionalProperties": false,
       "required": ["deadlines_met", "next_required_action"],
       "properties": {
-        "payment_due_at": { "type": "string" },
+        "payment_due_at": { "type": ["string", "null"] },
         "deadlines_met": { "type": "boolean" },
         "next_required_action": { "type": "string" }
       }

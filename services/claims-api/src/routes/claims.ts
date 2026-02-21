@@ -3,8 +3,9 @@ import { nanoid } from "nanoid";
 import { encrypt } from "../crypto/encrypt.js";
 import { computeDeadlines } from "../compliance/clock.js";
 import { computeEventHash, createEventSK } from "../lib/audit.js";
-import * as db from "../storage/dynamo.js";
+import * as db from "../storage/index.js";
 import * as s3 from "../storage/s3.js";
+import { runPipeline } from "../openclaw/orchestrator.js";
 
 export async function claimsRoutes(app: FastifyInstance) {
   app.post("/edge/claims", async (req, reply) => {
@@ -114,5 +115,18 @@ export async function claimsRoutes(app: FastifyInstance) {
     await db.updateClaimStage(claim_id, stage);
 
     return { ok: true, event_sk: eventSk, hash: event.hash };
+  });
+
+  app.post("/edge/claims/:id/run", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const claim = await db.getClaim(id);
+    if (!claim) return reply.code(404).send({ error: "Claim not found" });
+
+    try {
+      const result = await runPipeline(id);
+      return result;
+    } catch (err: any) {
+      return reply.code(500).send({ error: err.message });
+    }
   });
 }

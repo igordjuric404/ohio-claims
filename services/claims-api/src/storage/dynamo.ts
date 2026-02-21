@@ -7,6 +7,10 @@ import {
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 
+if (process.env.USE_MEMORY_STORAGE === "true") {
+  console.log("Using in-memory storage (no DynamoDB)");
+}
+
 const raw = new DynamoDBClient({});
 const ddb = DynamoDBDocumentClient.from(raw, {
   marshallOptions: { removeUndefinedValues: true },

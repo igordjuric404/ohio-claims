@@ -7,7 +7,7 @@
   "properties": {
     "final_outcome": { "type": "string", "enum": ["approve", "partial", "deny", "escalate"] },
     "rationale": { "type": "string", "minLength": 1 },
-    "approve_amount_cap": { "type": "number", "minimum": 0 },
+    "approve_amount_cap": { "type": ["number", "null"], "minimum": 0 },
     "required_actions": { "type": "array", "items": { "type": "string" } },
     "needs_human_review": { "type": "boolean" },
     "compliance": {

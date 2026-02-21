@@ -6,17 +6,17 @@
   "required": ["coverage_status", "proof_of_loss_needed", "compliance", "confidence"],
   "properties": {
     "coverage_status": { "type": "string", "enum": ["covered", "denied", "need_more_info"] },
-    "deductible": { "type": "number" },
-    "limits": { "type": "number" },
-    "denial_reason": { "type": "string" },
-    "denial_provision_ref": { "type": "string" },
+    "deductible": { "type": ["number", "null"] },
+    "limits": { "type": ["number", "null"] },
+    "denial_reason": { "type": ["string", "null"] },
+    "denial_provision_ref": { "type": ["string", "null"] },
     "proof_of_loss_needed": { "type": "boolean" },
     "compliance": {
       "type": "object",
       "additionalProperties": false,
       "required": ["accept_deny_deadline", "deadlines_met", "next_required_action"],
       "properties": {
-        "accept_deny_deadline": { "type": "string" },
+        "accept_deny_deadline": { "type": ["string", "null"] },
         "deadlines_met": { "type": "boolean" },
         "next_required_action": { "type": "string" }
       }

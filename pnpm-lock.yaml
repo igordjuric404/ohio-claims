@@ -28,6 +28,8 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.2.3)(tsx@4.21.0)
 
+  openclaw/plugins/claims-tools: {}
+
   packages/shared: {}
 
   services/claims-api:
@@ -44,6 +46,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.700.0
         version: 3.992.0
+      '@ohio-claims/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       fastify:
         specifier: ^5.0.0
         version: 5.7.4
