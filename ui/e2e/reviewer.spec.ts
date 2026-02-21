@@ -155,4 +155,46 @@ test.describe("Reviewer Dashboard & Claim Detail (R5, R6)", () => {
       decisionPanel.locator('button:has-text("Deny")')
     ).toBeVisible();
   });
+
+  test("R6: assessor section shows pricing sources panel with clickable links", async ({
+    page,
+  }) => {
+    await loginAsReviewer(page);
+    await page.locator(`text=${claimId}`).first().click();
+    await page.waitForLoadState("networkidle");
+
+    const pricingPanel = page.locator(".pricing-sources-panel");
+    await expect(pricingPanel).toBeVisible();
+
+    await expect(pricingPanel.locator(".pricing-sources-header")).toContainText("Pricing Sources");
+    await expect(pricingPanel.locator(".pricing-sources-header")).toContainText("verified");
+
+    const links = pricingPanel.locator(".pricing-source-link");
+    const count = await links.count();
+    expect(count).toBeGreaterThanOrEqual(1);
+
+    for (let i = 0; i < count; i++) {
+      const link = links.nth(i);
+      const href = await link.getAttribute("href");
+      expect(href).toMatch(/^https?:\/\//);
+      await expect(link.getAttribute("target")).resolves.toBe("_blank");
+      await expect(link.getAttribute("rel")).resolves.toContain("noopener");
+    }
+  });
+
+  test("R6: pricing source links show favicons and labels", async ({
+    page,
+  }) => {
+    await loginAsReviewer(page);
+    await page.locator(`text=${claimId}`).first().click();
+    await page.waitForLoadState("networkidle");
+
+    const pricingPanel = page.locator(".pricing-sources-panel");
+    await expect(pricingPanel).toBeVisible();
+
+    const firstLink = pricingPanel.locator(".pricing-source-link").first();
+    await expect(firstLink.locator(".pricing-source-favicon img")).toBeVisible();
+    await expect(firstLink.locator(".pricing-source-label")).not.toBeEmpty();
+    await expect(firstLink.locator(".pricing-source-external")).toBeVisible();
+  });
 });
