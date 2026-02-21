@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+*.env
+!env.example.sh
+infra/aws/.state/
+infra/aws/env.sh
+.wrangler/
+.openclaw/
+*.log
+.DS_Store
