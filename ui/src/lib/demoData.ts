@@ -22,23 +22,13 @@ export const DEMO_CLAIM: CreateClaimPayload = {
   },
 };
 
-const DEMO_IMAGE_URLS = [
-  "https://images.unsplash.com/photo-1597007066704-67bf2068d950?w=800&q=80",
-  "https://images.unsplash.com/photo-1543465077-db45d34b88a5?w=800&q=80",
-  "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80",
-];
-
 export async function fetchDemoImages(): Promise<File[]> {
-  const files: File[] = [];
-  for (let i = 0; i < DEMO_IMAGE_URLS.length; i++) {
-    try {
-      const res = await fetch(DEMO_IMAGE_URLS[i]);
-      if (!res.ok) continue;
-      const blob = await res.blob();
-      files.push(new File([blob], `demo-damage-${i + 1}.jpg`, { type: "image/jpeg" }));
-    } catch {
-      // Skip images that fail to fetch in demo mode
-    }
+  try {
+    const res = await fetch("/demo-damage.webp");
+    if (!res.ok) return [];
+    const blob = await res.blob();
+    return [new File([blob], "demo-damage.webp", { type: "image/webp" })];
+  } catch {
+    return [];
   }
-  return files;
 }

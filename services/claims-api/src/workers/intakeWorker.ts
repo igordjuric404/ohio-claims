@@ -7,7 +7,7 @@ const OPENROUTER_BASE = "https://openrouter.ai/api/v1";
 const EXTRACTION_MODEL = process.env.EXTRACTION_MODEL ?? "google/gemini-2.0-flash-001";
 
 const s3 = new S3Client({});
-const BUCKET = process.env.S3_BUCKET ?? "ohio-claims-dev-attachments";
+const BUCKET = process.env.S3_BUCKET ?? "ohio-claims-dev-attachments-422287833706-eu-central-1";
 
 const EXTRACTION_PROMPT = `You are a claims intake document extraction system for Ohio auto insurance claims.
 Extract structured claim data from the provided document text. Return ONLY valid JSON with these fields:

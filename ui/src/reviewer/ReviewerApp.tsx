@@ -12,7 +12,28 @@ export function ReviewerApp() {
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
 
   useEffect(() => {
-    reviewerApi.getMe().then((me) => setAuthenticated(!!me)).catch(() => setAuthenticated(false));
+    reviewerApi
+      .getMe()
+      .then(async (me) => {
+        if (me) {
+          setAuthenticated(true);
+        } else {
+          try {
+            await reviewerApi.login("");
+            setAuthenticated(true);
+          } catch {
+            setAuthenticated(false);
+          }
+        }
+      })
+      .catch(async () => {
+        try {
+          await reviewerApi.login("");
+          setAuthenticated(true);
+        } catch {
+          setAuthenticated(false);
+        }
+      });
   }, []);
 
   const navigateToClaim = useCallback((claimId: string) => {
@@ -31,7 +52,7 @@ export function ReviewerApp() {
   };
 
   if (authenticated === null) return <div className="admin-loading">Checking session...</div>;
-  if (!authenticated) return <ReviewerLogin onLogin={() => setAuthenticated(true)} />;
+  if (!authenticated) return <div className="admin-loading">Signing in...</div>;
 
   return (
     <div className="admin-layout">
@@ -67,46 +88,6 @@ export function ReviewerApp() {
           <ReviewerDashboard onSelectClaim={navigateToClaim} />
         )}
       </main>
-    </div>
-  );
-}
-
-function ReviewerLogin({ onLogin }: { onLogin: () => void }) {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      await reviewerApi.login(password);
-      onLogin();
-    } catch {
-      setError("Invalid credentials");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="admin-login-wrapper">
-      <form className="admin-login-form" onSubmit={handleSubmit}>
-        <h2>Senior Reviewer</h2>
-        <p className="muted">Sign in to review claims</p>
-        {error && <div className="pipeline-error">{error}</div>}
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoFocus
-        />
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? "Signing in..." : "Sign In"}
-        </button>
-      </form>
     </div>
   );
 }

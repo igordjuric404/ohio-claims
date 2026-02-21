@@ -4,7 +4,7 @@ import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { createPresignedUploadUrlForKey, listByPrefix } from "../storage/s3.js";
 
 const s3Client = new S3Client({});
-const S3_BUCKET = process.env.S3_BUCKET ?? "ohio-claims-dev-attachments";
+const S3_BUCKET = process.env.S3_BUCKET ?? "ohio-claims-dev-attachments-422287833706-eu-central-1";
 import { getACV } from "../tools/pricing.js";
 import { ulid } from "ulid";
 import { randomBytes } from "node:crypto";

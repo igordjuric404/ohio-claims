@@ -17,6 +17,8 @@ import { intakeRoutes } from "./routes/intake.js";
 import { assessmentRoutes } from "./routes/assessment.js";
 import { testSeedRoutes } from "./routes/testSeed.js";
 import { setAdminPassword, setReviewerPassword } from "./middleware/adminAuth.js";
+import * as db from "./storage/index.js";
+import { isTelegramConfigured } from "./notifications/telegram.js";
 
 const masterKey = process.env.APP_MASTER_KEY_B64;
 if (masterKey) {
@@ -52,6 +54,14 @@ await app.register(cookie);
 app.get("/healthz", async () => ({ ok: true }));
 app.get("/edge/ping", async () => ({ pong: true }));
 
+// Debug: claims count (for local dev troubleshooting)
+app.get("/edge/debug", async () => {
+  const useMemory = process.env.USE_MEMORY_STORAGE === "true";
+  if (!useMemory) return { storage: "dynamo", message: "Use memory storage for debug" };
+  const { items } = await db.scanClaims(500);
+  return { storage: "memory", claimsCount: items.length, port: process.env.PORT ?? "8080" };
+});
+
 await app.register(claimsRoutes);
 await app.register(runsRoutes);
 await app.register(adminAuthRoutes);
@@ -74,6 +84,11 @@ const host = process.env.HOST ?? "0.0.0.0";
 try {
   await app.listen({ port, host });
   console.log(`Claims API listening on ${host}:${port}`);
+  if (isTelegramConfigured()) {
+    console.log("Telegram notifications: enabled");
+  } else {
+    console.log("Telegram notifications: disabled (set TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID to enable)");
+  }
 } catch (err) {
   app.log.error(err);
   process.exit(1);

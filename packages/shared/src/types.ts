@@ -255,3 +255,58 @@ export type IntakeFile = {
   bytes?: number;
   doc_type?: string;
 };
+
+// --- Judge Agents ---
+
+export type JudgeVerdict = "pass" | "revise" | "fail";
+
+export type JudgeScores = {
+  groundedness: number;
+  correctness: number;
+  completeness: number;
+  consistency: number;
+  safety: number;
+  quality: number;
+};
+
+export type JudgeEvidence = {
+  field: string;
+  issue: string;
+  expected?: string;
+};
+
+export type JudgeOutput = {
+  verdict: JudgeVerdict;
+  scores: JudgeScores;
+  bullshit_flags: string[];
+  required_fixes: string[];
+  optional_suggestions: string[];
+  evidence: JudgeEvidence[];
+  confidence: number;
+};
+
+export type MetaJudgeVerdict = "affirm" | "override";
+
+export type MetaJudgeOutput = {
+  meta_verdict: MetaJudgeVerdict;
+  override_verdict: JudgeVerdict | null;
+  judge_quality_score: number;
+  issues: string[];
+  confidence: number;
+};
+
+export type JudgeRound = {
+  round: number;
+  producer_output: unknown;
+  judge_output: JudgeOutput;
+  meta_judge_output?: MetaJudgeOutput;
+  effective_verdict: JudgeVerdict;
+};
+
+export type JudgeReport = {
+  agent_id: string;
+  rounds: JudgeRound[];
+  final_verdict: JudgeVerdict;
+  final_scores: JudgeScores;
+  total_rounds: number;
+};

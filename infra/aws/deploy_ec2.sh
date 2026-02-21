@@ -54,6 +54,8 @@ APP_MASTER_KEY_B64=$(aws ssm get-parameter --name "/ohio-claims/dev/APP_MASTER_K
 OPENCLAW_GATEWAY_TOKEN=$(aws ssm get-parameter --name "/ohio-claims/dev/OPENCLAW_GATEWAY_TOKEN" --with-decryption --query 'Parameter.Value' --output text)
 ADMIN_PASSWORD=$(aws ssm get-parameter --name "/ohio-claims/dev/ADMIN_PASSWORD" --with-decryption --query 'Parameter.Value' --output text 2>/dev/null || echo "admin")
 REVIEWER_PASSWORD=$(aws ssm get-parameter --name "/ohio-claims/dev/REVIEWER_PASSWORD" --with-decryption --query 'Parameter.Value' --output text 2>/dev/null || echo "reviewer")
+TELEGRAM_BOT_TOKEN=$(aws ssm get-parameter --name "/ohio-claims/dev/TELEGRAM_BOT_TOKEN" --with-decryption --query 'Parameter.Value' --output text 2>/dev/null || echo "")
+TELEGRAM_CHAT_ID=$(aws ssm get-parameter --name "/ohio-claims/dev/TELEGRAM_CHAT_ID" --query 'Parameter.Value' --output text 2>/dev/null || echo "")
 
 echo "Writing environment file..."
 sudo mkdir -p /etc/ohio-claims
@@ -69,6 +71,8 @@ APP_MASTER_KEY_B64=${APP_MASTER_KEY_B64}
 OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
 ADMIN_PASSWORD=${ADMIN_PASSWORD}
 REVIEWER_PASSWORD=${REVIEWER_PASSWORD}
+TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
 EOF
 sudo chmod 600 /etc/ohio-claims/env
 

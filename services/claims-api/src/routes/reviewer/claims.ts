@@ -4,6 +4,37 @@ import * as db from "../../storage/index.js";
 import { listByPrefix, createPresignedGetUrl } from "../../storage/s3.js";
 import { computeEventHash, createEventSK } from "../../lib/audit.js";
 import { runFinanceStage } from "../../openclaw/orchestrator.js";
+import { decrypt } from "../../crypto/encrypt.js";
+
+function tryDecrypt(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  try {
+    return decrypt(value);
+  } catch {
+    return value;
+  }
+}
+
+function decryptClaimForDisplay(claim: Record<string, unknown>): Record<string, unknown> {
+  const copy = { ...claim };
+  if (copy.claimant && typeof copy.claimant === "object") {
+    const c = copy.claimant as Record<string, unknown>;
+    copy.claimant = {
+      full_name: tryDecrypt(c.full_name),
+      phone: tryDecrypt(c.phone),
+      email: c.email ? tryDecrypt(c.email) : undefined,
+      address: c.address ? tryDecrypt(c.address) : undefined,
+    };
+  }
+  if (copy.vehicle && typeof copy.vehicle === "object") {
+    const v = copy.vehicle as Record<string, unknown>;
+    copy.vehicle = {
+      ...v,
+      vin: v.vin ? tryDecrypt(v.vin) : undefined,
+    };
+  }
+  return copy;
+}
 
 export async function reviewerClaimsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", requireReviewer);
@@ -14,13 +45,11 @@ export async function reviewerClaimsRoutes(app: FastifyInstance) {
     const cursor = q.cursor ? JSON.parse(Buffer.from(q.cursor, "base64url").toString()) : undefined;
     const { items, lastKey } = await db.scanClaims(limit, cursor);
 
-    const reviewStages = ["PENDING_REVIEW", "FINAL_DECISION_DONE", "PAID", "CLOSED_NO_PAY"];
     let filtered = items;
     if (q.stage) {
       filtered = filtered.filter((c) => c.stage === q.stage);
-    } else {
-      filtered = filtered.filter((c) => reviewStages.includes(c.stage as string));
     }
+    // When no stage filter: show all claims (no stage-based filtering)
     if (q.search) {
       const s = q.search.toLowerCase();
       filtered = filtered.filter(
@@ -31,7 +60,7 @@ export async function reviewerClaimsRoutes(app: FastifyInstance) {
     }
 
     return {
-      claims: filtered,
+      claims: filtered.map((c) => decryptClaimForDisplay(c as Record<string, unknown>)),
       cursor: lastKey ? Buffer.from(JSON.stringify(lastKey)).toString("base64url") : null,
     };
   });
@@ -45,6 +74,8 @@ export async function reviewerClaimsRoutes(app: FastifyInstance) {
     const runs = await db.getRunsForClaim(id);
 
     const agentOutputs: Record<string, { input?: string; output?: unknown; reasoning?: string }> = {};
+    const judgeReports: Record<string, unknown> = {};
+
     for (const run of runs) {
       const agentId = run.agent_id as string;
       agentOutputs[agentId] = {
@@ -52,9 +83,28 @@ export async function reviewerClaimsRoutes(app: FastifyInstance) {
         output: (run as any).output_json ?? null,
         reasoning: (run as any).reasoning ?? null,
       };
+
+      const runEvts = await db.getRunEvents(run.run_id as string);
+      const judgeRounds = runEvts
+        .filter((e) => e.event_type === "judge.round")
+        .sort((a, b) => ((a as any).payload?.round ?? 0) - ((b as any).payload?.round ?? 0));
+      if (judgeRounds.length > 0) {
+        const lastPayload = (judgeRounds[judgeRounds.length - 1] as any).payload;
+        judgeReports[agentId] = {
+          ...lastPayload,
+          total_rounds: judgeRounds.length,
+          rounds: judgeRounds.map((e) => (e as any).payload),
+        };
+      }
     }
 
-    return { claim, events, runs, agent_outputs: agentOutputs };
+    return {
+      claim: decryptClaimForDisplay(claim as Record<string, unknown>),
+      events,
+      runs,
+      agent_outputs: agentOutputs,
+      judge_reports: judgeReports,
+    };
   });
 
   app.get("/reviewer/claims/:id/photos", async (req) => {

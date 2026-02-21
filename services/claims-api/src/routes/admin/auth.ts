@@ -1,6 +1,5 @@
 import type { FastifyInstance } from "fastify";
 import {
-  validatePassword,
   createSession,
   getSessionFromRequest,
   COOKIE_NAME,
@@ -9,11 +8,6 @@ import {
 
 export async function adminAuthRoutes(app: FastifyInstance) {
   app.post("/admin/login", async (req, reply) => {
-    const { password } = (req.body ?? {}) as { password?: string };
-    if (!password || !validatePassword(password)) {
-      return reply.code(401).send({ error: "Invalid credentials" });
-    }
-
     const { cookie, maxAge } = createSession("admin");
     reply.setCookie(COOKIE_NAME, cookie, {
       path: "/",

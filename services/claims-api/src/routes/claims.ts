@@ -6,6 +6,7 @@ import { computeEventHash, createEventSK } from "../lib/audit.js";
 import * as db from "../storage/index.js";
 import * as s3 from "../storage/s3.js";
 import { runPipeline } from "../openclaw/orchestrator.js";
+import { notifyClaimSubmitted, notifyPipelineComplete } from "../notifications/telegram.js";
 
 export async function claimsRoutes(app: FastifyInstance) {
   app.post("/edge/claims", async (req, reply) => {
@@ -60,6 +61,16 @@ export async function claimsRoutes(app: FastifyInstance) {
     };
     event.hash = computeEventHash(event);
     await db.putEvent(event);
+
+    const vehicle = [body.vehicle?.year, body.vehicle?.make, body.vehicle?.model].filter(Boolean).join(" ");
+    notifyClaimSubmitted(claimId, {
+      policyId: body.policy_id,
+      claimant: body.claimant?.full_name,
+      lossDate: body.loss?.date_of_loss,
+      city: body.loss?.city,
+      description: body.loss?.description,
+      vehicle: vehicle || undefined,
+    }).catch(() => {});
 
     return reply.code(201).send({ claim_id: claimId, stage: "FNOL_SUBMITTED", compliance: claim.compliance });
   });
@@ -123,7 +134,17 @@ export async function claimsRoutes(app: FastifyInstance) {
     if (!claim) return reply.code(404).send({ error: "Claim not found" });
 
     try {
+      const startTime = Date.now();
       const result = await runPipeline(id);
+      const duration = Math.round((Date.now() - startTime) / 1000);
+
+      notifyPipelineComplete(id, {
+        finalStage: result.final_stage ?? "unknown",
+        stagesCompleted: result.stages_completed ?? [],
+        errors: result.errors,
+        duration,
+      }).catch(() => {});
+
       return result;
     } catch (err: any) {
       return reply.code(500).send({ error: err.message });

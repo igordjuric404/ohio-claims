@@ -5,7 +5,8 @@
   "scripts": {
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "lint": "echo 'lint placeholder'"
+    "lint": "echo 'lint placeholder'",
+    "dev": "./dev.sh"
   },
   "devDependencies": {
     "@types/node": "^25.2.3",

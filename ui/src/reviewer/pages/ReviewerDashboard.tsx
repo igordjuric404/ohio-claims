@@ -7,19 +7,53 @@ type Props = {
   onSelectClaim: (claimId: string) => void;
 };
 
-const REVIEWER_STAGES = ["PENDING_REVIEW", "FINAL_DECISION_DONE", "PAID", "CLOSED_NO_PAY"];
+const REVIEWER_STAGES = [
+  "FNOL_SUBMITTED", "FRONTDESK_DONE", "COVERAGE_DONE", "ASSESSMENT_DONE", "FRAUD_DONE",
+  "PENDING_REVIEW", "FINAL_DECISION_DONE", "PAID", "CLOSED_NO_PAY",
+];
+
+const EDGE_BASE = "/edge";
 
 export function ReviewerDashboard({ onSelectClaim }: Props) {
   const [claims, setClaims] = useState<any[]>([]);
   const [stageFilter, setStageFilter] = useState("");
   const [error, setError] = useState("");
+  const [debugInfo, setDebugInfo] = useState<{ storage?: string; claimsCount?: number; port?: string } | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   const loadClaims = () => {
+    setError("");
     const params: Record<string, string> = { limit: "50" };
     if (stageFilter) params.stage = stageFilter;
     reviewerApi.getClaims(params)
       .then((d) => setClaims(d.claims ?? []))
       .catch((e: Error) => setError(e.message));
+  };
+
+  const checkDebug = async () => {
+    try {
+      const res = await fetch(`${EDGE_BASE}/debug`);
+      const data = await res.json();
+      setDebugInfo(data);
+    } catch {
+      setDebugInfo({ storage: "error", claimsCount: 0 });
+    }
+  };
+
+  const seedTestClaim = async () => {
+    setSeeding(true);
+    setError("");
+    try {
+      const res = await fetch("/internal/test/seed-reviewed-claim", { method: "POST" });
+      if (!res.ok) throw new Error("Seed failed");
+      const data = await res.json();
+      loadClaims();
+      setDebugInfo(null);
+    } catch (e: any) {
+      setError(e.message || "Seed failed. Ensure API runs with USE_MEMORY_STORAGE=true");
+    } finally {
+      setSeeding(false);
+    }
   };
 
   useEffect(loadClaims, [stageFilter]);
@@ -81,8 +115,27 @@ export function ReviewerDashboard({ onSelectClaim }: Props) {
           ))}
           {claims.length === 0 && (
             <tr>
-              <td colSpan={5} className="muted" style={{ textAlign: "center", padding: "2rem" }}>
-                No claims to review
+              <td colSpan={5} style={{ padding: "2rem", verticalAlign: "top" }}>
+                <div className="reviewer-empty-state">
+                  <p className="muted" style={{ marginBottom: "1rem" }}>No claims to review</p>
+                  <div className="reviewer-empty-help">
+                    <p><strong>Local dev setup:</strong> Run <code>./dev.sh</code> from the project root to start API + UI with matching ports.</p>
+                    <p>Or ensure API (PORT=8080) and UI (API_TARGET=http://127.0.0.1:8080) match.</p>
+                    <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem", flexWrap: "wrap" }}>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={checkDebug}>
+                        Check API
+                      </button>
+                      <button type="button" className="btn btn-primary btn-sm" onClick={seedTestClaim} disabled={seeding}>
+                        {seeding ? "Seeding…" : "Seed test claim"}
+                      </button>
+                    </div>
+                    {debugInfo && (
+                      <pre className="muted" style={{ marginTop: "0.5rem", fontSize: "0.75rem", padding: "0.5rem", background: "#f5f5f5", borderRadius: 4 }}>
+                        {JSON.stringify(debugInfo, null, 2)}
+                      </pre>
+                    )}
+                  </div>
+                </div>
               </td>
             </tr>
           )}

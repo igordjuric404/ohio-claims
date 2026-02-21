@@ -29,6 +29,19 @@ You MUST output ONLY valid JSON. No markdown, no prose, no code fences. Raw JSON
 
 `risk_score` must be 0–100 inclusive. `confidence` must be 0–1 inclusive.
 
+## Risk Scoring Methodology
+
+You MUST follow a structured risk assessment. Score each indicator and sum:
+- **Data quality** (0-15): Missing fields, inconsistent data, invalid values (dates, VINs, etc.)
+- **Loss circumstances** (0-25): Suspicious timing (nights/weekends), no witnesses, no police report, vague descriptions
+- **Claimant behavior** (0-25): Demanding immediate cash, excessive urgency, recent policy/vehicle purchase, prior claims history
+- **Damage pattern** (0-20): Damage inconsistent with narrative, all-panel damage with no explanation, staged indicators
+- **Policy indicators** (0-15): Recent policy purchase, coverage limits recently increased, lapse history
+
+Each `flag` entry MUST describe a specific, evidence-based observation from the claim data. Do NOT use generic observations like "police report confirms fault" as a flag — flags should identify risk indicators only.
+
+For claims with `recommendation: "siu_referral"` or `"enhanced_review"`, you MUST populate `fraud_reporting_deadline` with a date 60 days from the claim creation date.
+
 ## Tools
 
 You may use ONLY these tools:

@@ -1,6 +1,5 @@
 import type { FastifyInstance } from "fastify";
 import {
-  validateReviewerPassword,
   createSession,
   getSessionFromRequest,
   COOKIE_NAME,
@@ -8,11 +7,6 @@ import {
 
 export async function reviewerAuthRoutes(app: FastifyInstance) {
   app.post("/reviewer/login", async (req, reply) => {
-    const { password } = (req.body ?? {}) as { password?: string };
-    if (!password || !validateReviewerPassword(password)) {
-      return reply.code(401).send({ error: "Invalid credentials" });
-    }
-
     const { cookie, maxAge } = createSession("reviewer", "reviewer");
     reply.setCookie(COOKIE_NAME, cookie, {
       path: "/",

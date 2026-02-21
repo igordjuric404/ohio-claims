@@ -186,8 +186,97 @@ export async function testSeedRoutes(app: FastifyInstance) {
       stageEvent.hash = computeEventHash(stageEvent);
       await db.putEvent(stageEvent);
       prevHash = stageEvent.hash as string;
+
+      const judgeData = JUDGE_SEED_DATA[stage.agent_id];
+      if (judgeData) {
+        await db.putRunEvent({
+          run_id: runId,
+          seq: 101,
+          ts: runEnded,
+          event_type: "judge.round",
+          payload: judgeData,
+        });
+      }
     }
 
     return { claim_id: claimId, stage: "PENDING_REVIEW" };
   });
 }
+
+const JUDGE_SEED_DATA: Record<string, Record<string, unknown>> = {
+  frontdesk: {
+    round: 1,
+    agent_id: "frontdesk",
+    verdict: "pass",
+    scores: { groundedness: 5, correctness: 5, completeness: 4, consistency: 5, safety: 5, quality: 4 },
+    bullshit_flags: [],
+    required_fixes: [],
+    optional_suggestions: ["Consider flagging the police report number for downstream verification."],
+    evidence: [],
+    confidence: 0.92,
+    meta_verdict: "affirm",
+    meta_override: null,
+    meta_judge_quality_score: 4.5,
+    meta_issues: [],
+    meta_confidence: 0.95,
+  },
+  claimsofficer: {
+    round: 1,
+    agent_id: "claimsofficer",
+    verdict: "pass",
+    scores: { groundedness: 4, correctness: 5, completeness: 5, consistency: 4, safety: 5, quality: 5 },
+    bullshit_flags: [],
+    required_fixes: [],
+    optional_suggestions: ["Deductible amount could reference a specific policy schedule section."],
+    evidence: [
+      { field: "coverage_confirmed", issue: "Verified against policy terms", expected: "true" },
+    ],
+    confidence: 0.88,
+    meta_verdict: "affirm",
+    meta_override: null,
+    meta_judge_quality_score: 4.8,
+    meta_issues: [],
+    meta_confidence: 0.93,
+  },
+  assessor: {
+    round: 1,
+    agent_id: "assessor",
+    verdict: "pass",
+    scores: { groundedness: 5, correctness: 4, completeness: 4, consistency: 5, safety: 5, quality: 4 },
+    bullshit_flags: [],
+    required_fixes: [],
+    optional_suggestions: [
+      "Could add OEM vs aftermarket breakdown per component.",
+      "Labor rate source could be more specific to Columbus metro.",
+    ],
+    evidence: [
+      { field: "repair_estimate_low", issue: "Matches web search pricing data", expected: "$2,800" },
+      { field: "pricing_sources", issue: "All 3 URLs verified as reachable", expected: "3 sources" },
+    ],
+    confidence: 0.85,
+    meta_verdict: "affirm",
+    meta_override: null,
+    meta_judge_quality_score: 4.2,
+    meta_issues: ["Judge could have verified URL freshness timestamps."],
+    meta_confidence: 0.88,
+  },
+  fraudanalyst: {
+    round: 1,
+    agent_id: "fraudanalyst",
+    verdict: "pass",
+    scores: { groundedness: 5, correctness: 5, completeness: 5, consistency: 5, safety: 5, quality: 5 },
+    bullshit_flags: [],
+    required_fixes: [],
+    optional_suggestions: [],
+    evidence: [
+      { field: "fraud_risk_score", issue: "Score consistent with clean claim indicators", expected: "< 0.2" },
+      { field: "red_flags", issue: "No flags detected — matches police report corroboration", expected: "[]" },
+    ],
+    confidence: 0.95,
+    meta_verdict: "affirm",
+    meta_override: null,
+    meta_judge_quality_score: 5.0,
+    meta_issues: [],
+    meta_confidence: 0.97,
+  },
+};

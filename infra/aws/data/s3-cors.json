@@ -3,7 +3,7 @@
     {
       "AllowedHeaders": ["*"],
       "AllowedMethods": ["PUT", "POST", "GET", "HEAD"],
-      "AllowedOrigins": ["https://*.pages.dev"],
+      "AllowedOrigins": ["https://*.pages.dev", "http://localhost:*"],
       "ExposeHeaders": []
     }
   ]

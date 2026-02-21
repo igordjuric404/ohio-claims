@@ -2,7 +2,7 @@ import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command } fr
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const s3 = new S3Client({});
-const BUCKET = process.env.S3_BUCKET ?? "ohio-claims-dev-attachments";
+const BUCKET = process.env.S3_BUCKET ?? "ohio-claims-dev-attachments-422287833706-eu-central-1";
 
 export async function createPresignedUploadUrl(
   claimId: string,

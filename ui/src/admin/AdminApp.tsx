@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getMe, logout } from "./api";
-import { Login } from "./pages/Login";
+import { getMe, login, logout } from "./api";
 import { Overview } from "./pages/Overview";
 import { Claims } from "./pages/Claims";
 import { RunViewer } from "./pages/RunViewer";
@@ -38,7 +37,27 @@ export function AdminApp() {
   const [pageParams, setPageParams] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    getMe().then((me) => setAuthenticated(!!me)).catch(() => setAuthenticated(false));
+    getMe()
+      .then(async (me) => {
+        if (me) {
+          setAuthenticated(true);
+        } else {
+          try {
+            await login("");
+            setAuthenticated(true);
+          } catch {
+            setAuthenticated(false);
+          }
+        }
+      })
+      .catch(async () => {
+        try {
+          await login("");
+          setAuthenticated(true);
+        } catch {
+          setAuthenticated(false);
+        }
+      });
   }, []);
 
   useEffect(() => {
@@ -68,7 +87,7 @@ export function AdminApp() {
   };
 
   if (authenticated === null) return <div className="admin-loading">Checking session...</div>;
-  if (!authenticated) return <Login onLogin={() => setAuthenticated(true)} />;
+  if (!authenticated) return <div className="admin-loading">Signing in...</div>;
 
   let content: React.ReactNode;
   switch (page) {

@@ -29,6 +29,15 @@ Base your `repair_estimate_low` and `repair_estimate_high` on the REAL prices yo
 - Low estimate: aftermarket/LKQ parts + lower labor hours
 - High estimate: OEM parts + higher labor hours
 
+**CRITICAL: `repair_estimate_low` and `repair_estimate_high` MUST ALWAYS be numbers (not strings, not "N/A", not null).** Even for total loss cases, provide the estimated repair cost as numbers. If total loss is recommended, still estimate the hypothetical repair cost — this is how you justify the total loss determination (repair exceeds ~75% of ACV).
+
+**For total loss cases:**
+- Set `total_loss_recommended: true`
+- `repair_estimate_low` / `repair_estimate_high` = the hypothetical full repair cost (to prove it exceeds ACV)
+- `actual_cash_value` = the vehicle's market value (REQUIRED, search for it)
+- `valuation_method` = the method used (REQUIRED, e.g. "local_comps" or "industry_source_database")
+- Do NOT use sentinel values like 0 or 999
+
 ## Input
 
 You receive a claim summary as JSON. Extract:

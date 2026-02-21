@@ -1,12 +1,13 @@
 import { ulid } from "ulid";
 import { randomBytes } from "node:crypto";
 import { runAgent, loadSystemPrompt, webSearchForPricing, analyzeImagesWithVision, type AgentCallOptions, type ImagePart } from "./client.js";
+import { judgeProducerOutput, type JudgeStageResult } from "./judge.js";
 import { stageValidators } from "@ohio-claims/shared";
 import * as db from "../storage/index.js";
 import { listByPrefix, getObjectAsBase64 } from "../storage/s3.js";
 import { computeEventHash, createEventSK } from "../lib/audit.js";
 import { decrypt } from "../crypto/encrypt.js";
-import type { ClaimStage } from "@ohio-claims/shared";
+import type { ClaimStage, JudgeReport } from "@ohio-claims/shared";
 
 const AGENTS_NEEDING_REASONING = new Set(["claimsofficer", "assessor", "fraudanalyst"]);
 
@@ -97,6 +98,8 @@ async function appendEvent(
   return event;
 }
 
+const ENABLE_JUDGES = process.env.ENABLE_JUDGES !== "false";
+
 export type PipelineResult = {
   claim_id: string;
   final_stage: string;
@@ -104,6 +107,7 @@ export type PipelineResult = {
   errors: string[];
   stage_outputs: Record<string, unknown>;
   run_ids: string[];
+  judge_reports?: Record<string, JudgeReport>;
 };
 
 async function runStage(
@@ -466,6 +470,7 @@ export async function runPipeline(claimId: string, actorId = "system"): Promise<
     errors: [],
     stage_outputs: {},
     run_ids: [],
+    judge_reports: {},
   };
 
   let claim = await db.getClaim(claimId);
@@ -502,6 +507,35 @@ export async function runPipeline(claimId: string, actorId = "system"): Promise<
 
     result.stages_completed.push(step.toStage);
     result.stage_outputs[step.toStage] = stageResult.output;
+
+    if (ENABLE_JUDGES && stageResult.output) {
+      try {
+        const decryptedClaim = decryptClaimForAgent(claim as Record<string, unknown>);
+        const judgeResult = await judgeProducerOutput(
+          step.agentId,
+          claimId,
+          decryptedClaim,
+          stageResult.output,
+          undefined,
+          stageResult.runId,
+        );
+        result.judge_reports![step.agentId] = judgeResult.report;
+
+        await appendEvent(claimId, step.toStage, "JUDGE_COMPLETED", {
+          agent_id: step.agentId,
+          verdict: judgeResult.report.final_verdict,
+          scores: judgeResult.report.final_scores,
+          total_rounds: judgeResult.report.total_rounds,
+          accepted: judgeResult.accepted,
+        }, { run_id: stageResult.runId, actor_id: actorId, trace_id: pipelineTraceId });
+      } catch (err: any) {
+        await appendEvent(claimId, step.toStage, "JUDGE_FAILED", {
+          agent_id: step.agentId,
+          error: err.message,
+        }, { run_id: stageResult.runId, actor_id: actorId, trace_id: pipelineTraceId });
+      }
+    }
+
     claim = await db.getClaim(claimId);
   }
 

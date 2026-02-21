@@ -18,6 +18,14 @@ export default defineConfig({
           return path.replace('/api/', '/edge/');
         },
       },
+      '/internal': {
+        target: process.env.API_TARGET ?? 'http://127.0.0.1:8080',
+        changeOrigin: true,
+      },
+      '/edge': {
+        target: process.env.API_TARGET ?? 'http://127.0.0.1:8080',
+        changeOrigin: true,
+      },
     },
   },
 })

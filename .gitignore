@@ -10,3 +10,6 @@ infra/aws/env.sh
 *.log
 .DS_Store
 ui/test-results/
+test-runs/outputs/
+test-runs/outputs-v1/
+test-runs/validation-report.json

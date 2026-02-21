@@ -464,7 +464,12 @@
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 0.75rem;
 }
-.summary-grid > div { display: flex; flex-direction: column; gap: 0.15rem; }
+.summary-grid > div { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.summary-grid .output-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .summary-description { margin-top: 0.75rem; }
 .summary-description p { margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.5; }
 .reviewer-photos { margin-bottom: 1.5rem; }
@@ -510,6 +515,14 @@
 .agent-input-details { margin-top: 0.5rem; }
 .agent-input-details summary { font-size: 0.75rem; cursor: pointer; color: var(--color-text-muted); }
 .agent-input-pre { font-size: 0.7rem; max-height: 200px; overflow: auto; margin-top: 0.4rem; }
+
+/* Confidence color coding */
+.confidence-high { background: rgba(90, 154, 107, 0.10); border: 1px solid rgba(90, 154, 107, 0.25); }
+.confidence-high .output-value { color: var(--color-success); }
+.confidence-mid { background: rgba(201, 167, 78, 0.08); border: 1px solid rgba(201, 167, 78, 0.20); }
+.confidence-mid .output-value { color: var(--color-warning); }
+.confidence-low { background: rgba(196, 84, 84, 0.10); border: 1px solid rgba(196, 84, 84, 0.25); }
+.confidence-low .output-value { color: var(--color-error); }
 
 /* Damage Photos with Descriptions */
 .photo-overall-assessment {
@@ -692,6 +705,162 @@
 .decision-denied { background: rgba(196,84,84,0.15); color: var(--color-error); }
 .decision-panel-decided { text-align: center; }
 .decision-panel-complete { text-align: center; }
+
+/* Judge Verdict Panel */
+/* === Judge Verdict Panel === */
+.judge-verdict-panel {
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--color-border);
+}
+.judge-verdict-panel.judge-pass { background: rgba(90, 154, 107, 0.06); border-color: rgba(90, 154, 107, 0.25); }
+.judge-verdict-panel.judge-revise { background: rgba(201, 167, 78, 0.06); border-color: rgba(201, 167, 78, 0.25); }
+.judge-verdict-panel.judge-fail { background: rgba(196, 84, 84, 0.06); border-color: rgba(196, 84, 84, 0.25); }
+
+.judge-verdict-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+.judge-verdict-left { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.judge-verdict-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.judge-verdict-badge.judge-pass { background: rgba(90, 154, 107, 0.2); color: var(--color-success); }
+.judge-verdict-badge.judge-revise { background: rgba(201, 167, 78, 0.2); color: var(--color-warning); }
+.judge-verdict-badge.judge-fail { background: rgba(196, 84, 84, 0.2); color: var(--color-error); }
+.judge-verdict-badge-sm {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+.judge-verdict-badge-sm.judge-pass { background: rgba(90, 154, 107, 0.15); color: var(--color-success); }
+.judge-verdict-badge-sm.judge-revise { background: rgba(201, 167, 78, 0.15); color: var(--color-warning); }
+.judge-verdict-badge-sm.judge-fail { background: rgba(196, 84, 84, 0.15); color: var(--color-error); }
+.judge-avg-score { font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted); }
+.judge-confidence { font-size: 0.7rem; color: var(--color-text-dim); }
+.judge-rounds-count { font-size: 0.65rem; color: var(--color-text-dim); background: var(--dark-800, #f0f0f0); padding: 0.15rem 0.5rem; border-radius: 8px; }
+
+/* Score bar grid */
+.judge-scores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+.judge-score-bar-item { }
+.judge-score-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  text-transform: capitalize;
+  margin-bottom: 2px;
+  color: var(--color-text-dim);
+}
+.judge-score-bar-track {
+  height: 4px;
+  background: var(--dark-800, #eee);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.judge-score-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+.judge-score-bar-fill.score-good { background: var(--color-success); }
+.judge-score-bar-fill.score-mid { background: var(--color-warning); }
+.judge-score-bar-fill.score-bad { background: var(--color-error); }
+
+.score-good { color: var(--color-success); }
+.score-mid { color: var(--color-warning); }
+.score-bad { color: var(--color-error); }
+
+/* Flags & Fixes */
+.judge-flags { margin-bottom: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
+.judge-flags-label { font-size: 0.7rem; font-weight: 600; color: var(--color-error); margin-right: 0.25rem; }
+.judge-flag-item {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  background: rgba(196, 84, 84, 0.1);
+  border: 1px solid rgba(196, 84, 84, 0.2);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+.judge-fixes { margin-bottom: 0.5rem; }
+.judge-fixes-list { margin: 0.25rem 0 0; padding-left: 1.25rem; font-size: 0.75rem; color: var(--color-text-muted); }
+.judge-fixes-list li { margin-bottom: 0.15rem; }
+
+/* Evidence table */
+.judge-evidence-section { margin-top: 0.5rem; }
+.judge-evidence-section h5 { font-size: 0.7rem; font-weight: 600; margin: 0 0 0.3rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.03em; }
+.judge-evidence-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+.judge-evidence-table th {
+  text-align: left;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-dim);
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.judge-evidence-table td {
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* Suggestions */
+.judge-suggestions { margin-top: 0.5rem; }
+.judge-suggestions h5 { font-size: 0.7rem; font-weight: 600; margin: 0 0 0.3rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.03em; }
+.judge-suggestions ul { margin: 0; padding-left: 1.25rem; font-size: 0.75rem; color: var(--color-text-muted); }
+.judge-suggestions li { margin-bottom: 0.15rem; }
+
+/* Meta-Judge section */
+.judge-meta-section { margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px dashed var(--color-border); }
+.judge-meta-section h5 { font-size: 0.7rem; font-weight: 600; margin: 0 0 0.3rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.03em; }
+.judge-meta-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.judge-meta-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+.judge-meta-badge.meta-affirm { background: rgba(90, 154, 107, 0.15); color: var(--color-success); }
+.judge-meta-badge.meta-override { background: rgba(201, 167, 78, 0.15); color: var(--color-warning); }
+.judge-meta-quality { font-size: 0.7rem; color: var(--color-text-muted); }
+.judge-meta-issues { margin: 0.3rem 0 0; padding-left: 1.25rem; font-size: 0.7rem; color: var(--color-text-muted); }
+
+/* Round history */
+.judge-history { margin-top: 0.5rem; }
+.judge-history summary { font-size: 0.7rem; cursor: pointer; color: var(--color-text-dim); }
+.judge-history-round {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--dark-900, #fafafa);
+}
+.judge-history-round-header { margin-bottom: 0.3rem; }
+.judge-round-detail { }
 
 /* Runs Grouped by Claim */
 .claim-run-groups { display: flex; flex-direction: column; gap: 0.5rem; }
