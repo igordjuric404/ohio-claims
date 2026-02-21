@@ -511,6 +511,81 @@
 .agent-input-details summary { font-size: 0.75rem; cursor: pointer; color: var(--color-text-muted); }
 .agent-input-pre { font-size: 0.7rem; max-height: 200px; overflow: auto; margin-top: 0.4rem; }
 
+/* Pricing Sources Panel */
+.pricing-sources-panel {
+  margin-top: 0.75rem;
+  background: var(--dark-900, #141414);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 8px);
+  padding: 0.75rem 1rem;
+}
+.pricing-sources-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-secondary, #8b9cf7);
+  margin-bottom: 0.6rem;
+}
+.pricing-sources-icon { flex-shrink: 0; }
+.pricing-sources-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.pricing-source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  background: var(--dark-800, #1e1e1e);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--accent-primary, #7c8cf5);
+  text-decoration: none;
+  font-size: 0.78rem;
+  transition: all 0.15s ease;
+  max-width: 320px;
+}
+.pricing-source-link:hover {
+  background: rgba(124, 140, 245, 0.1);
+  border-color: var(--accent-primary, #7c8cf5);
+  color: var(--light-100, #fff);
+}
+.pricing-source-favicon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.pricing-source-favicon img {
+  border-radius: 2px;
+}
+.pricing-source-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pricing-source-external {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+.pricing-source-link:hover .pricing-source-external {
+  opacity: 1;
+}
+.pricing-sources-notes {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border);
+}
+.pricing-source-note {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin: 0.15rem 0;
+}
+
 /* Decision Panel */
 .decision-panel {
   background: var(--dark-800, #1e1e1e);

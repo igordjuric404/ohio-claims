@@ -23,15 +23,79 @@ function isComplianceField(key: string): boolean {
   return key === "compliance" || COMPLIANCE_FIELDS.includes(key);
 }
 
+function extractUrlAndLabel(source: string): { url: string; label: string } | null {
+  const match = source.match(/^(https?:\/\/[^\s]+?)(?:\s+[—–-]\s+(.+))?$/);
+  if (!match) return null;
+  const url = match[1];
+  const title = match[2];
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./, "");
+    return { url, label: title || hostname };
+  } catch {
+    return { url, label: title || url };
+  }
+}
+
+function PricingSourcesPanel({ sources }: { sources: string[] }) {
+  const links = sources.map(extractUrlAndLabel).filter(Boolean) as { url: string; label: string }[];
+  const nonLinks = sources.filter(s => !extractUrlAndLabel(s));
+
+  if (links.length === 0 && nonLinks.length === 0) return null;
+
+  return (
+    <div className="pricing-sources-panel">
+      <div className="pricing-sources-header">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="pricing-sources-icon">
+          <path d="M6.354 2.146a.5.5 0 010 .708L3.707 5.5H11a4.5 4.5 0 010 9H8a.5.5 0 010-1h3a3.5 3.5 0 000-7H3.707l2.647 2.646a.5.5 0 11-.708.708l-3.5-3.5a.5.5 0 010-.708l3.5-3.5a.5.5 0 01.708 0z" fill="currentColor"/>
+        </svg>
+        <span>Pricing Sources ({links.length} verified)</span>
+      </div>
+      <div className="pricing-sources-list">
+        {links.map((link, i) => (
+          <a
+            key={i}
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pricing-source-link"
+          >
+            <span className="pricing-source-favicon">
+              <img
+                src={`https://www.google.com/s2/favicons?domain=${new URL(link.url).hostname}&sz=16`}
+                alt=""
+                width="16"
+                height="16"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+            </span>
+            <span className="pricing-source-label">{link.label}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="pricing-source-external">
+              <path d="M3.5 1.5h7v7M10 2L4.5 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </a>
+        ))}
+      </div>
+      {nonLinks.length > 0 && (
+        <div className="pricing-sources-notes">
+          {nonLinks.map((n, i) => <p key={i} className="pricing-source-note">{n}</p>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AgentSection({ agentId, data }: { agentId: string; data: { input?: string; output?: any; reasoning?: string } }) {
   const output = data.output;
 
   const mainFields: [string, unknown][] = [];
   const complianceFields: [string, unknown][] = [];
+  let pricingSources: string[] | null = null;
 
   if (output && typeof output === "object") {
     for (const [k, v] of Object.entries(output)) {
-      if (k === "compliance" && typeof v === "object" && v !== null) {
+      if (k === "pricing_sources" && Array.isArray(v) && v.length > 0) {
+        pricingSources = v as string[];
+      } else if (k === "compliance" && typeof v === "object" && v !== null) {
         for (const [ck, cv] of Object.entries(v as Record<string, unknown>)) {
           complianceFields.push([ck, cv]);
         }
@@ -80,6 +144,8 @@ function AgentSection({ agentId, data }: { agentId: string; data: { input?: stri
           </div>
         </div>
       )}
+
+      {pricingSources && <PricingSourcesPanel sources={pricingSources} />}
 
       {complianceFields.length > 0 && (
         <details className="agent-compliance">

@@ -13,16 +13,32 @@ const DEFAULT_MODEL = process.env.OPENCLAW_MODEL ?? "google/gemini-2.0-flash-001
 const GATEWAY_URL = process.env.OPENCLAW_GATEWAY_URL;
 const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN ?? "";
 
+export type UrlCitation = {
+  url: string;
+  title?: string;
+  content?: string;
+  start_index?: number;
+  end_index?: number;
+};
+
 export type AgentResponse = {
   text: string;
   model: string;
   reasoning?: string;
   usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+  citations?: UrlCitation[];
+};
+
+export type WebSearchPlugin = {
+  id: "web";
+  max_results?: number;
+  search_prompt?: string;
 };
 
 export type AgentCallOptions = {
   model?: string;
   enableReasoning?: boolean;
+  plugins?: WebSearchPlugin[];
 };
 
 async function callOpenRouterDirect(
@@ -43,6 +59,10 @@ async function callOpenRouterDirect(
 
   if (options.enableReasoning) {
     body.reasoning = { max_tokens: 2000 };
+  }
+
+  if (options.plugins && options.plugins.length > 0) {
+    body.plugins = options.plugins;
   }
 
   const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
@@ -66,11 +86,26 @@ async function callOpenRouterDirect(
   const text = message?.content ?? "";
   const reasoning = message?.reasoning ?? undefined;
 
+  let citations: UrlCitation[] | undefined;
+  if (Array.isArray(message?.annotations)) {
+    citations = message.annotations
+      .filter((a: any) => a.type === "url_citation" && a.url_citation?.url)
+      .map((a: any) => ({
+        url: a.url_citation.url,
+        title: a.url_citation.title,
+        content: a.url_citation.content,
+        start_index: a.url_citation.start_index,
+        end_index: a.url_citation.end_index,
+      }));
+    if (citations.length === 0) citations = undefined;
+  }
+
   return {
     text,
     model: data.model ?? model,
     reasoning,
     usage: data.usage,
+    citations,
   };
 }
 
@@ -142,4 +177,16 @@ export async function runAgent(
 
   const systemPrompt = loadSystemPrompt(agentId);
   return callOpenRouterDirect(systemPrompt, message, options);
+}
+
+export async function webSearchForPricing(query: string): Promise<AgentResponse> {
+  const systemPrompt = "You are a helpful research assistant. Find real current prices from real websites. For each price you find, include the full URL where you found it. Be specific and factual.";
+  return callOpenRouterDirect(systemPrompt, query, {
+    model: DEFAULT_MODEL,
+    plugins: [{
+      id: "web",
+      max_results: 10,
+      search_prompt: "Web search results for auto parts pricing and labor rates. Use these results to provide accurate, sourced pricing data:",
+    }],
+  });
 }

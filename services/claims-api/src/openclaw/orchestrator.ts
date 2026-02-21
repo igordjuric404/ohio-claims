@@ -1,6 +1,6 @@
 import { ulid } from "ulid";
 import { randomBytes } from "node:crypto";
-import { runAgent, loadSystemPrompt, type AgentCallOptions } from "./client.js";
+import { runAgent, loadSystemPrompt, webSearchForPricing, type AgentCallOptions } from "./client.js";
 import { stageValidators } from "@ohio-claims/shared";
 import * as db from "../storage/index.js";
 import { computeEventHash, createEventSK } from "../lib/audit.js";
@@ -120,7 +120,37 @@ async function runStage(
 
   const decryptedClaim = decryptClaimForAgent(claim);
   const claimSummary = JSON.stringify(decryptedClaim, null, 2);
-  const prompt = `Analyze this claim and produce your structured JSON output.\n\nClaim data:\n${claimSummary}`;
+
+  let pricingResearch = "";
+  let pricingCitations: { url: string; title?: string }[] = [];
+
+  if (AGENTS_NEEDING_WEB_SEARCH.has(agentId)) {
+    const vehicle = decryptedClaim.vehicle as Record<string, unknown> | undefined;
+    const loss = decryptedClaim.loss as Record<string, unknown> | undefined;
+    const year = vehicle?.year ?? "";
+    const make = vehicle?.make ?? "";
+    const model = vehicle?.model ?? "";
+    const city = loss?.city ?? "";
+    const state = loss?.state ?? "OH";
+    const description = (loss?.description as string) ?? "";
+
+    const searchQuery = `Find current 2024-2026 auto parts prices and body shop labor rates:\n\nVehicle: ${year} ${make} ${model}\nLocation: ${city}, ${state}\nDamage description: ${description}\n\nSearch for:\n1. Price of each damaged part (OEM and aftermarket) for this vehicle\n2. Auto body shop labor rate per hour in ${city}, ${state}\n3. If extensive damage, the vehicle's current market value\n\nFor each result, provide the price, the part name, and the URL where you found it.`;
+
+    try {
+      const searchResponse = await webSearchForPricing(searchQuery);
+      pricingResearch = searchResponse.text;
+      pricingCitations = searchResponse.citations ?? [];
+    } catch (err: any) {
+      pricingResearch = `Web search failed: ${err.message}. Estimate based on your knowledge.`;
+    }
+  }
+
+  let prompt: string;
+  if (pricingResearch) {
+    prompt = `Here is real-time web research data with current auto parts prices and labor rates:\n\n--- WEB RESEARCH RESULTS ---\n${pricingResearch}\n--- END WEB RESEARCH ---\n\nNow analyze the claim below using the REAL prices from the web research above. Put the actual URLs from the research into pricing_sources.\n\nClaim data:\n${claimSummary}`;
+  } else {
+    prompt = `Analyze this claim and produce your structured JSON output.\n\nClaim data:\n${claimSummary}`;
+  }
   const systemPrompt = loadSystemPrompt(agentId);
 
   const run: Record<string, unknown> = {
@@ -152,6 +182,14 @@ async function runStage(
 
   await emitRunEvent("stage.started", { agent_id: agentId, claim_id: claimId, stage: toStage });
 
+  if (pricingResearch) {
+    await emitRunEvent("web_search.results", {
+      research_text: truncate(pricingResearch, 5000),
+      citation_count: pricingCitations.length,
+      citation_urls: pricingCitations.map(c => c.url),
+    });
+  }
+
   await emitRunEvent("agent.input", {
     system_prompt: truncate(systemPrompt, 3000),
     prompt: truncate(prompt, 3000),
@@ -161,13 +199,11 @@ async function runStage(
   let agentModel: string | undefined;
   let agentUsage: any;
   let agentReasoning: string | undefined;
+  let agentCitations: { url: string; title?: string }[] | undefined;
 
   const callOptions: AgentCallOptions = {};
   if (AGENTS_NEEDING_REASONING.has(agentId)) {
     callOptions.enableReasoning = true;
-  }
-  if (AGENTS_NEEDING_WEB_SEARCH.has(agentId)) {
-    callOptions.model = WEB_SEARCH_MODEL;
   }
 
   try {
@@ -176,6 +212,7 @@ async function runStage(
     agentModel = response.model;
     agentUsage = response.usage;
     agentReasoning = response.reasoning;
+    agentCitations = response.citations;
   } catch (err: any) {
     const ended = new Date();
     await emitRunEvent("stage.failed", { error: err.message });
@@ -224,6 +261,25 @@ async function runStage(
     }
   }
 
+  const allCitations = [...pricingCitations, ...(agentCitations ?? [])];
+  if (allCitations.length > 0 && parsed && typeof parsed === "object") {
+    const out = parsed as Record<string, unknown>;
+    const seen = new Set<string>();
+    const citationUrls: string[] = [];
+    for (const c of allCitations) {
+      if (!seen.has(c.url)) {
+        seen.add(c.url);
+        citationUrls.push(c.title ? `${c.url} — ${c.title}` : c.url);
+      }
+    }
+    const existingSources = Array.isArray(out.pricing_sources) ? out.pricing_sources as string[] : [];
+    const existingUrls = existingSources.filter(s => typeof s === "string" && s.startsWith("http"));
+    const combined = [...new Set([...citationUrls, ...existingUrls])];
+    if (combined.length > 0) {
+      out.pricing_sources = combined;
+    }
+  }
+
   const ended = new Date();
   await emitRunEvent("stage.completed", parsed);
   const runUpdateData: Record<string, unknown> = {
@@ -235,6 +291,9 @@ async function runStage(
   };
   if (agentReasoning) {
     runUpdateData.reasoning = agentReasoning;
+  }
+  if (agentCitations) {
+    runUpdateData.citations = agentCitations;
   }
   await db.updateRunStatus(runId, "SUCCEEDED", runUpdateData);
 

@@ -9,13 +9,51 @@ function formatCost(usage: any): string {
   return `$${Number(usage.cost).toFixed(6)}`;
 }
 
-const SKIP_KEYS = new Set(["repair_estimate_high"]);
+const SKIP_KEYS = new Set(["repair_estimate_high", "pricing_sources"]);
+
+function extractUrlAndLabel(source: string): { url: string; label: string } | null {
+  const match = source.match(/^(https?:\/\/[^\s]+?)(?:\s+[—–-]\s+(.+))?$/);
+  if (!match) return null;
+  const url = match[1];
+  const title = match[2];
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./, "");
+    return { url, label: title || hostname };
+  } catch {
+    return { url, label: title || url };
+  }
+}
+
+function PricingSourcesCards({ sources }: { sources: string[] }) {
+  const links = sources.map(extractUrlAndLabel).filter(Boolean) as { url: string; label: string }[];
+  if (links.length === 0) return null;
+  return (
+    <div className="run-output-card run-output-card-full">
+      <dt>Pricing Sources ({links.length})</dt>
+      <dd>
+        <div className="pricing-sources-list">
+          {links.map((link, i) => (
+            <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="pricing-source-link">
+              <span className="pricing-source-favicon">
+                <img src={`https://www.google.com/s2/favicons?domain=${new URL(link.url).hostname}&sz=16`} alt="" width="16" height="16" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </span>
+              <span className="pricing-source-label">{link.label}</span>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="pricing-source-external">
+                <path d="M3.5 1.5h7v7M10 2L4.5 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </a>
+          ))}
+        </div>
+      </dd>
+    </div>
+  );
+}
 
 function renderOutputCards(obj: Record<string, unknown>) {
   const entries = Object.entries(obj).filter(
     ([k, v]) => v !== null && v !== undefined && v !== "" && !SKIP_KEYS.has(k)
   );
-  return entries.map(([k, v]) => {
+  const cards = entries.map(([k, v]) => {
     let displayValue: React.ReactNode;
     if (k === "repair_estimate_low" && typeof v === "number" && typeof obj.repair_estimate_high === "number") {
       displayValue = formatCurrencyRange(v, obj.repair_estimate_high as number);
@@ -32,6 +70,13 @@ function renderOutputCards(obj: Record<string, unknown>) {
       </div>
     );
   });
+
+  const pricingSources = obj.pricing_sources;
+  if (Array.isArray(pricingSources) && pricingSources.length > 0) {
+    cards.push(<PricingSourcesCards key="pricing_sources" sources={pricingSources as string[]} />);
+  }
+
+  return cards;
 }
 
 function RunPhotos({ claimId }: { claimId: string }) {

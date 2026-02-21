@@ -258,6 +258,7 @@
 .run-output-card dt { font-size: 0.7rem; font-weight: 600; color: var(--accent-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.15rem; }
 .run-output-card dd { margin: 0; font-size: 0.8rem; color: var(--light-300); word-break: break-word; }
 .run-output-card dd pre { margin: 0; font-size: 0.7rem; }
+.run-output-card-full { grid-column: 1 / -1; }
 
 /* Live indicator */
 .live-indicator { color: var(--color-error); font-weight: 700; animation: pulse 1.5s infinite; }
